@@ -1,8 +1,5 @@
 package com.orden_pago.demo.model;
 
-import java.util.Date;
-import java.util.List;
-
 import org.springframework.data.annotation.Id;
 
 import jakarta.persistence.Entity;
@@ -19,20 +16,21 @@ import lombok.AllArgsConstructor;
 @Getter
 @Setter
 @Entity
-@Table(name = "ordenes")
-public class Orden {
-    @Id 
+@Table(name = "orden_items")
+public class OrdenItem {
+
+    @Id
     private Long id;
 
-    private Date fechaCreacion;
+    private String nombreProducto;
 
-    private String estado;
+    private Integer cantidad;
 
-    private Double total;
+    private Double precioUnitario;
 
-    private List<OrdenItem> items;
+    private Double subtotal;
+    
+    private Long ordenId;
 
-    private String metodoPago;
-
-    private Long clienteId;
+    private Long productoId;
 }
