@@ -1,0 +1,309 @@
+### Pruebas con escenarios
+### Puerto: 8084
+
+# Variables de entorno
+@baseUrl = http://localhost:8084
+@authToken = Bearer your-jwt-token-here
+
+### ESCENARIO 1: Un usuario compra múltiples servicios y se pagan exitosamente
+
+### Verificar la salud del servicio
+GET {{ baseUrl }}/actuator/health
+Content-Type: application/json
+
+###
+
+### Agregar el primer servicio al carrito
+POST {{ baseUrl }}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "quantity": 2
+}
+
+###
+
+### Agregar el segundo servicio al carrito
+POST {{ baseUrl }}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "quantity": 1
+}
+
+###
+
+### Modificar cantidad del primer servicio
+PUT {{ baseUrl }}/api/cart/items/{itemId}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "quantity": 3
+}
+
+###
+
+### Verificar contenido del carrito
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Procesar pago del carrito
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{cartId-from-step-1.7}",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Pepito Perez",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "1234"
+}
+
+###
+
+### Verificar historial de pagos
+GET {{baseUrl}}/api/payment/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+
+### ESCENARIO 2: Un usuario modifica el carrito sin realizar el pago y después lo elimina
+
+### Crear nuevo carrito con items
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440003",
+  "quantity": 1
+}
+
+###
+
+### Agregar más items
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440004",
+  "quantity": 2
+}
+
+###
+
+### Verificar carrito actual
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Remover un item específico
+DELETE {{baseUrl}}/api/cart/items/{itemId}
+Authorization: {{authToken}}
+
+###
+
+### Verificar carrito después de remover item
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Abandonar carrito (vaciarlo completamente)
+DELETE {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+
+###
+
+### Verificar carrito vacío
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### ESCENARIO 3: Un usuario intenta varios pagos
+
+### Crear carrito para pago
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440005",
+  "quantity": 1
+}
+
+###
+
+### Primer intento de pago (puede fallar por simulación)
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{cartId-from-step-3.1}",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Pedro Pascal"
+}
+
+###
+
+### Segundo intento de pago si el primero falló
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{cartId-from-step-3.1}",
+  "method": "PAYPAL",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Pedro Pascal"
+}
+
+###
+
+### Tercer intento con transferencia bancaria
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{cartId-from-step-3.1}",
+  "method": "BANK_TRANSFER",
+  "cardNumber": "1234567890123456",
+  "cardHolderName": "Pedro Pascal"
+}
+
+###
+
+### Verificar historial completo de pagos
+GET {{baseUrl}}/api/payment/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Obtener estadísticas de pagos del usuario
+GET {{baseUrl}}/api/payment/stats
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### ESCENARIO 4: Pruebas de concurrencia (múltiples carritos)
+
+### Crear primer carrito
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440006",
+  "quantity": 1
+}
+
+###
+
+### Completar primer carrito con pago
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{cartId-from-step-4.1}",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Usuario Multitarea"
+}
+
+###
+
+### Crear segundo carrito inmediatamente
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440007",
+  "quantity": 2
+}
+
+###
+
+### Verificar que se creó un nuevo carrito activo
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Verificar historial de carritos
+GET {{baseUrl}}/api/cart/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### ESCENARIO 5: Validación de seguridad 
+
+### Intentar acceso sin token
+GET {{baseUrl}}/api/cart
+Content-Type: application/json
+
+###
+
+### Intentar agregar item con datos inválidos
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "",
+  "quantity": -1
+}
+
+###
+
+### Intentar pago con carrito inexistente
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "00000000",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Usuario 123"
+}
+
+###
+
+### Intentar modificar item que no existe
+PUT {{baseUrl}}/api/cart/items/00000000
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+
+###

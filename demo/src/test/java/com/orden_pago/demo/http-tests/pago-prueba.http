@@ -1,0 +1,247 @@
+### Pruebas de endpoints de Pagos
+### Microservicio: carrito-compras-service
+### Puerto: 8084
+
+# Variables de entorno
+@baseUrl = http://localhost:8084
+@authToken = Bearer your-jwt-token-here
+@cartId = your-cart-id-here
+
+### PREREQUISITO: Crear un carrito con items antes de realizar pagos ###
+
+### 1. Crear carrito con items para pago
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "quantity": 2
+}
+
+###
+
+### 2. Agregar más items al carrito
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "quantity": 1
+}
+
+###
+
+### 3. Verificar carrito antes del pago (GET)
+GET {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### --- ENDPOINTS DE PAGO ---
+
+### 4. Simular pago con tarjeta de crédito (POST)
+# Reemplaza: {cartId} con el ID real del carrito obtenido anteriormente
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{{cartId}}",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
+}
+
+###
+
+### 5. Crear nuevo carrito para otra prueba de pago
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440003",
+  "quantity": 1
+}
+
+###
+
+### 6. Simular pago con PayPal (POST)
+# Usar el nuevo cartId del carrito recién creado
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "new-cart-id-here",
+  "method": "PAYPAL",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "María García"
+}
+
+###
+
+### 7. Crear otro carrito para transferencia bancaria
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440004",
+  "quantity": 3
+}
+
+###
+
+### 8. Simular pago con transferencia bancaria (POST)
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "another-cart-id-here",
+  "method": "BANK_TRANSFER",
+  "cardNumber": "1234567890123456",
+  "cardHolderName": "Carlos López"
+}
+
+###
+
+### 9. Obtener historial de pagos (GET)
+GET {{baseUrl}}/api/v1/payment/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 10. Obtener pago por transaction ID (GET)
+# Reemplaza: {transactionId} con un ID real de transacción obtenido del historial
+GET {{baseUrl}}/api/v1/payment/transaction/{transactionId}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 11. Obtener estadísticas de pagos del usuario (GET)
+GET {{baseUrl}}/api/v1/payment/stats
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### --- CASOS DE ERROR PARA TESTING ---
+
+### 12. Pago sin cartId (POST) - Error 400
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 13. Pago sin método de pago (POST) - Error 400
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "550e8400-e29b-41d4-a716-446655440001",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 14. Pago sin número de tarjeta (POST) - Error 400
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "550e8400-e29b-41d4-a716-446655440001",
+  "method": "CREDIT_CARD",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 15. Pago sin nombre del titular (POST) - Error 400
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "550e8400-e29b-41d4-a716-446655440001",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012"
+}
+
+###
+
+### 16. Pago con carrito inexistente (POST) - Error 400
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "00000000-0000-0000-0000-000000000000",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 17. Pago con carrito vacío (POST) - Error 400
+# Primero crear carrito vacío y luego intentar pagar
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "empty-cart-id-here",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 18. Doble pago del mismo carrito (POST) - Error 400
+# Intentar pagar nuevamente un carrito ya pagado
+POST {{baseUrl}}/api/v1/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "already-paid-cart-id",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Juan Pérez"
+}
+
+###
+
+### 19. Obtener pago con transaction ID inexistente (GET) - Error 404
+GET {{baseUrl}}/api/v1/payment/transaction/TXN-00000000-0000
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 20. Acceso a pagos sin autorización (GET) - Error 401
+GET {{baseUrl}}/api/v1/payment/history
+Content-Type: application/json
+
+###

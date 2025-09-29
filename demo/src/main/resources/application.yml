@@ -1,14 +1,39 @@
 spring:
   application:
-    name: demo
+    name: carrito-compras-service
   security:
     oauth2:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8180/realms/microservices-ecosystem
           jwk-set-uri: http://localhost:8180/realms/microservices-ecosystem/protocol/openid-connect/certs
-
+  datasource:
+    url: jdbc:h2:mem:payment
+    driver-class-name: org.h2.Driver
+    username: admin
+    password: admin123
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
 
 server:
     port: 8084
+
+# Configuración para microservicio de servicios
+services:
+  microservice:
+    url: http://localhost:8083
+
+# Configuración para simulación de pagos
+payment:
+  simulation:
+    enabled: true
+    success-rate: 0.85
+    min-delay: 2000
+    max-delay: 5000
 

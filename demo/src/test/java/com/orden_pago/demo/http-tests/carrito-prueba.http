@@ -1,0 +1,103 @@
+### Pruebas de endpoints del Carrito de Compras
+### Microservicio: carrito-compras-service
+### Puerto: 8084
+
+# Variables de entorno
+@baseUrl = http://localhost:8084
+@authToken = Bearer your-jwt-token-here
+
+### 1. Obtiene el carrito actual (GET)
+# Este endpoint obtiene el carrito activo del usuario autenticado
+GET {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 2. Agrega un nuevo item al carrito (POST)
+# Agrega un nuevo item al carrito o incrementa la cantidad si ya existe
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "quantity": 2
+}
+
+###
+
+### 3. Agrega un item diferente al carrito (POST)
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "quantity": 1
+}
+
+###
+
+### 4. Agrega un item existente para incrementar cantidad (POST)
+POST {{baseUrl}}/api/v1/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "quantity": 1
+}
+
+###
+
+### 5. Actualiza la cantidad de un item (PUT)
+PUT {{baseUrl}}/api/v1/cart/items/{itemId}
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "quantity": 5
+}
+
+###
+
+### 6. Obtiene un carrito con items ya creados (GET)
+GET {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 7. Obtiene el historial de carritos (GET)
+GET {{baseUrl}}/api/v1/cart/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 8. Elimina un item específico del carrito (DELETE)
+DELETE {{baseUrl}}/api/v1/cart/items/{itemId}
+Authorization: {{authToken}}
+
+###
+
+### 9. Obtiene el carrito después de eliminar un item (GET)
+GET {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 10. Elimina un carrito completamente (DELETE)
+DELETE {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+
+###
+
+### 11. Verifica el carrito vacío (GET)
+GET {{baseUrl}}/api/v1/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
