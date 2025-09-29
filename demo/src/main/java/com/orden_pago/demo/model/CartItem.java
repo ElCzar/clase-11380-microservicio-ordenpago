@@ -25,13 +25,25 @@ public class CartItem {
     private Cart cart; // Carrito asociado
 
     @Column(name = "service_id", nullable = false)
-    private UUID serviceId; // Referencia al servicio del microservicio de marketplace
+    private UUID serviceId; // Servicio del microservicio de marketplace
 
     @Column(name = "service_name", nullable = false)
-    private String serviceName; // Nombre del servicio
+    private String serviceName; // Título del servicio
+
+    @Column(name = "service_description", length = 1000)
+    private String serviceDescription; // Descripción del servicio
 
     @Column(name = "service_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal servicePrice; // Precio del servicio
+
+    @Column(name = "service_category")
+    private String serviceCategory; // Nombre de la categoría
+
+    @Column(name = "service_image_url")
+    private String serviceImageUrl; // URL de la imagen principal
+
+    @Column(name = "average_rating")
+    private Double averageRating; // Calificación promedio del servicio
 
     @Column(nullable = false)
     private Integer quantity; // Cantidad del servicio

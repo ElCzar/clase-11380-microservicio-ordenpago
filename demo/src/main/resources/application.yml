@@ -20,14 +20,44 @@ spring:
   h2:
     console:
       enabled: true
+  # Configuración de Kafka
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+          auto-create-topics: true
+          configuration:
+            "[key.serializer]": org.apache.kafka.common.serialization.StringSerializer
+            "[value.serializer]": org.springframework.kafka.support.serializer.JsonSerializer
+            "[key.deserializer]": org.apache.kafka.common.serialization.StringDeserializer
+            "[value.deserializer]": org.springframework.kafka.support.serializer.JsonDeserializer
+            "[spring.json.trusted.packages]": "*"
+      bindings:
+        serviceRequest-out-0:
+          destination: service-request-topic
+          content-type: application/json
 
 server:
     port: 8084
 
-# Configuración para microservicio de servicios
-services:
-  microservice:
-    url: http://localhost:8083
+management:
+  endpoints:
+    web:
+      exposure:
+        # Exposes monitoring for every endpoint
+        # through /actuator/metrics
+        include: "*"
+
+  endpoint:
+    health:
+      # Adds an endpoint to monitor service health
+      # /actuator/health
+      show-details: always
+
+  info:
+    env:
+      enabled: true
 
 # Configuración para simulación de pagos
 payment:

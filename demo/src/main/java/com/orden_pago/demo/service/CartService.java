@@ -1,7 +1,7 @@
 package com.orden_pago.demo.service;
 
-import com.orden_pago.demo.client.ServiceClient;
-import com.orden_pago.demo.dto.ServiceDto;
+import com.orden_pago.demo.dto.CartEventDTO;
+import com.orden_pago.demo.dto.ServiceResponseDTO;
 import com.orden_pago.demo.enums.CartStatus;
 import com.orden_pago.demo.model.Cart;
 import com.orden_pago.demo.model.CartItem;
@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -27,10 +28,10 @@ public class CartService {
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
-    private final ServiceClient serviceClient;
+    private final KafkaMessagingService kafkaMessagingService;
 
     /**
-     * Obtiene el carrito actual del usuario (activo)
+     * Obtiene el carrito actual del usuario
      */
     public Cart getCurrentCart(Authentication authentication) {
         String userId = getUserIdFromAuth(authentication);
@@ -56,56 +57,100 @@ public class CartService {
     }
 
     /**
-     * Agrega un item al carrito
+     * Agrega un item al carrito (comunicación asíncrona)
      */
-    public CartItem addItemToCart(Authentication authentication, UUID serviceId, Integer quantity) {
+    public CompletableFuture<CartItem> addItemToCartAsync(Authentication authentication, UUID serviceId,
+            Integer quantity) {
         String userId = getUserIdFromAuth(authentication);
         log.info("Agregando item al carrito para usuario: {}, servicio: {}, cantidad: {}",
                 userId, serviceId, quantity);
 
-        // Obtener o crear carrito
+        // Obtener carrito
         Cart cart = getCurrentCart(authentication);
 
-        // Validar que el servicio existe y está disponible
-        Optional<ServiceDto> serviceDto = serviceClient.getServiceById(serviceId);
-        if (serviceDto.isEmpty()) {
-            throw new RuntimeException("Servicio no encontrado: " + serviceId);
+        // Solicitar información del servicio a través de Kafka
+        return kafkaMessagingService.requestServiceInfo(serviceId)
+                .thenCompose(serviceResponse -> {
+                    if (serviceResponse.getErrorMessage() != null) {
+                        throw new RuntimeException(
+                                "Error al obtener información del servicio: " + serviceResponse.getErrorMessage());
+                    }
+
+                    if (!serviceResponse.getAvailable()) {
+                        throw new RuntimeException("Servicio no disponible: " + serviceId);
+                    }
+
+                    return addItemToCartInternal(cart, serviceResponse, quantity, userId);
+                });
+    }
+
+    /**
+     * Agrega un item al carrito
+     */
+    public CartItem addItemToCart(Authentication authentication, UUID serviceId, Integer quantity) {
+        try {
+            return addItemToCartAsync(authentication, serviceId, quantity).get();
+        } catch (Exception e) {
+            log.error("Error agregando item al carrito: {}", e.getMessage());
+            throw new RuntimeException("Error agregando item al carrito: " + e.getMessage());
         }
+    }
 
-        if (!serviceDto.get().isAvailable()) {
-            throw new RuntimeException("Servicio no disponible: " + serviceId);
-        }
+    /**
+     * Método interno para agregar item después de validar el servicio
+     */
+    private CompletableFuture<CartItem> addItemToCartInternal(Cart cart, ServiceResponseDTO serviceResponse,
+            Integer quantity, String userId) {
+        return CompletableFuture.supplyAsync(() -> {
+            UUID serviceId = serviceResponse.getServiceId();
 
-        // Verificar si el item ya existe en el carrito
-        Optional<CartItem> existingItem = cartItemRepository.findByCartAndServiceId(cart, serviceId);
+            // Verificar si el item ya existe en el carrito
+            Optional<CartItem> existingItem = cartItemRepository.findByCartAndServiceId(cart, serviceId);
 
-        if (existingItem.isPresent()) {
-            // Actualizar cantidad del item existente
-            CartItem item = existingItem.get();
-            item.setQuantity(item.getQuantity() + quantity);
-            item = cartItemRepository.save(item);
+            CartItem item;
+            if (existingItem.isPresent()) {
+                // Actualizar cantidad del item existente
+                item = existingItem.get();
+                item.setQuantity(item.getQuantity() + quantity);
+                item = cartItemRepository.save(item);
 
-            log.info("Cantidad actualizada para item existente. Nueva cantidad: {}", item.getQuantity());
-            return item;
-        } else {
-            // Crear nuevo item
-            CartItem newItem = new CartItem();
-            newItem.setCart(cart);
-            newItem.setServiceId(serviceId);
-            newItem.setServiceName(serviceDto.get().getName());
-            newItem.setServicePrice(serviceDto.get().getPrice());
-            newItem.setQuantity(quantity);
-            newItem.setAddedAt(LocalDateTime.now());
+                log.info("Cantidad actualizada para item existente. Nueva cantidad: {}", item.getQuantity());
 
-            CartItem savedItem = cartItemRepository.save(newItem);
+                // Publicar evento de actualización
+                kafkaMessagingService.publishCartEvent(
+                        CartEventDTO.itemUpdated(cart.getId(), userId, serviceId, item.getServiceName(),
+                                item.getQuantity(), item.getSubtotal()));
+            } else {
+                // Crear nuevo item con información completa del servicio
+                CartItem newItem = new CartItem();
+                newItem.setCart(cart);
+                newItem.setServiceId(serviceId);
+                newItem.setServiceName(serviceResponse.getName());
+                newItem.setServiceDescription(truncateDescription(serviceResponse.getDescription()));
+                newItem.setServicePrice(serviceResponse.getPrice());
+                newItem.setServiceCategory(serviceResponse.getCategoryName());
+                newItem.setServiceImageUrl(serviceResponse.getPrimaryImageUrl());
+                newItem.setAverageRating(serviceResponse.getAverageRating());
+                newItem.setQuantity(quantity);
+                newItem.setAddedAt(LocalDateTime.now());
+
+                item = cartItemRepository.save(newItem);
+
+                log.info("Nuevo item agregado al carrito con ID: {} - Servicio: {} ({})",
+                        item.getId(), item.getServiceName(), item.getServiceCategory());
+
+                // Publicar evento de item agregado con información completa
+                kafkaMessagingService.publishCartEvent(
+                        CartEventDTO.itemAdded(cart.getId(), userId, serviceId, item.getServiceName(),
+                                item.getServiceCategory(), item.getServicePrice(), quantity, item.getSubtotal()));
+            }
 
             // Actualizar timestamp del carrito
             cart.setUpdatedAt(LocalDateTime.now());
             cartRepository.save(cart);
 
-            log.info("Nuevo item agregado al carrito con ID: {}", savedItem.getId());
-            return savedItem;
-        }
+            return item;
+        });
     }
 
     /**
@@ -125,6 +170,11 @@ public class CartService {
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
 
+        // Publicar evento de actualización
+        kafkaMessagingService.publishCartEvent(
+                CartEventDTO.itemUpdated(cart.getId(), cart.getUserId(), item.getServiceId(),
+                        item.getServiceName(), newQuantity, item.getSubtotal()));
+
         log.info("Cantidad del item actualizada exitosamente");
         return updatedItem;
     }
@@ -139,11 +189,18 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Item no encontrado: " + itemId));
 
         Cart cart = item.getCart();
+        UUID serviceId = item.getServiceId();
+        String serviceName = item.getServiceName();
+
         cartItemRepository.delete(item);
 
         // Actualizar timestamp del carrito
         cart.setUpdatedAt(LocalDateTime.now());
         cartRepository.save(cart);
+
+        // Publicar evento de item removido
+        kafkaMessagingService.publishCartEvent(
+                CartEventDTO.itemRemoved(cart.getId(), cart.getUserId(), serviceId, serviceName));
 
         log.info("Item removido del carrito exitosamente");
     }
@@ -162,6 +219,10 @@ public class CartService {
 
             cart.setUpdatedAt(LocalDateTime.now());
             cartRepository.save(cart);
+
+            // Publicar evento de carrito vaciado
+            kafkaMessagingService.publishCartEvent(
+                    CartEventDTO.cartCleared(cart.getId(), userId));
 
             log.info("Carrito vaciado exitosamente");
         }
@@ -209,5 +270,18 @@ public class CartService {
             return jwt.getClaimAsString("sub"); // o el claim que contenga el user ID
         }
         throw new RuntimeException("No se pudo obtener el user ID del token");
+    }
+
+    /**
+     * Trunca la descripción del servicio para el carrito (máximo 1000 caracteres)
+     */
+    private String truncateDescription(String description) {
+        if (description == null) {
+            return null;
+        }
+        if (description.length() <= 1000) {
+            return description;
+        }
+        return description.substring(0, 997) + "...";
     }
 }

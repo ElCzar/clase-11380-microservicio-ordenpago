@@ -1,5 +1,6 @@
 package com.orden_pago.demo.service;
 
+import com.orden_pago.demo.dto.PaymentEventDTO;
 import com.orden_pago.demo.dto.PaymentRequest;
 import com.orden_pago.demo.dto.PaymentResponse;
 import com.orden_pago.demo.dto.PaymentResult;
@@ -30,6 +31,7 @@ public class PaymentService {
     private final CartRepository cartRepository;
     private final CartService cartService;
     private final PaymentSimulationService paymentSimulationService;
+    private final KafkaMessagingService kafkaMessagingService;
 
     /**
      * Procesa un pago simulado
@@ -63,6 +65,10 @@ public class PaymentService {
         // Crear registro de pago
         Payment payment = createPaymentRecord(request, cart, userId);
 
+        // Publicar evento de pago iniciado
+        kafkaMessagingService.publishPaymentEvent(
+                PaymentEventDTO.paymentInitiated(payment.getId(), cart.getId(), userId, payment.getAmount()));
+
         try {
             // Simular procesamiento de pago
             PaymentResult result = paymentSimulationService.simulatePayment(request);
@@ -73,7 +79,18 @@ public class PaymentService {
             // Si el pago fue exitoso, marcar carrito como completado
             if (result.getStatus() == PaymentStatus.COMPLETED) {
                 cartService.completeCart(cart);
+
+                // Publicar evento de pago exitoso
+                kafkaMessagingService.publishPaymentEvent(
+                        PaymentEventDTO.paymentSuccess(payment.getId(), cart.getId(), userId,
+                                payment.getAmount(), payment.getCardNumber()));
+
                 log.info("Pago procesado exitosamente con transacción: {}", result.getTransactionId());
+            } else {
+                // Publicar evento de pago fallido
+                kafkaMessagingService.publishPaymentEvent(
+                        PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
+                                payment.getAmount(), result.getMessage()));
             }
 
             return PaymentResponse.builder()
@@ -88,6 +105,11 @@ public class PaymentService {
             log.error("Error procesando pago: {}", e.getMessage());
             payment.failPayment();
             paymentRepository.save(payment);
+
+            // Publicar evento de pago fallido
+            kafkaMessagingService.publishPaymentEvent(
+                    PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
+                            payment.getAmount(), "Error interno procesando el pago"));
 
             return PaymentResponse.builder()
                     .status(PaymentStatus.FAILED)
