@@ -3,7 +3,7 @@
 
 # Variables de entorno
 @baseUrl = http://localhost:8084
-@authToken = Bearer your-jwt-token-here
+@authToken = 
 
 ### ESCENARIO 1: Un usuario compra múltiples servicios y se pagan exitosamente
 
@@ -19,7 +19,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "serviceId": "",
   "quantity": 2
 }
 
@@ -31,7 +31,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -61,7 +61,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "{cartId-from-step-1.7}",
+  "cartId": "",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Pepito Perez",
@@ -147,7 +147,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440005",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -159,7 +159,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "{cartId-from-step-3.1}",
+  "cartId": "",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Pedro Pascal"
@@ -173,7 +173,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "{cartId-from-step-3.1}",
+  "cartId": "",
   "method": "PAYPAL",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Pedro Pascal"
@@ -187,7 +187,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "{cartId-from-step-3.1}",
+  "cartId": "",
   "method": "BANK_TRANSFER",
   "cardNumber": "1234567890123456",
   "cardHolderName": "Pedro Pascal"
@@ -217,7 +217,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440006",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -229,7 +229,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "{cartId-from-step-4.1}",
+  "cartId": "",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Usuario Multitarea"
@@ -243,7 +243,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440007",
+  "serviceId": "",
   "quantity": 2
 }
 
@@ -305,5 +305,3 @@ Content-Type: application/json
 {
   "quantity": 5
 }
-
-###

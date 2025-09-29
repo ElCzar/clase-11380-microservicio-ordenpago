@@ -4,8 +4,6 @@ import com.orden_pago.demo.enums.PaymentStatus;
 import com.orden_pago.demo.model.Cart;
 import com.orden_pago.demo.model.Payment;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;

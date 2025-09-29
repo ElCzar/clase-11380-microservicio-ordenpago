@@ -4,8 +4,8 @@
 
 # Variables de entorno
 @baseUrl = http://localhost:8084
-@authToken = Bearer your-jwt-token-here
-@cartId = your-cart-id-here
+@authToken = 
+@cartId = 
 
 ### PREREQUISITO: Crear un carrito con items antes de realizar pagos ###
 
@@ -15,7 +15,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "serviceId": "",
   "quantity": 2
 }
 
@@ -27,7 +27,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -66,7 +66,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440003",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -79,7 +79,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "new-cart-id-here",
+  "cartId": "",
   "method": "PAYPAL",
   "cardNumber": "4532123456789012",
   "cardHolderName": "María García"
@@ -93,7 +93,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440004",
+  "serviceId": "",
   "quantity": 3
 }
 
@@ -105,7 +105,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "another-cart-id-here",
+  "cartId": "",
   "method": "BANK_TRANSFER",
   "cardNumber": "1234567890123456",
   "cardHolderName": "Carlos López"
@@ -210,7 +210,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "empty-cart-id-here",
+  "cartId": "",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Juan Pérez"
@@ -225,7 +225,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "already-paid-cart-id",
+  "cartId": "",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
   "cardHolderName": "Juan Pérez"

@@ -4,7 +4,7 @@
 
 # Variables de entorno
 @baseUrl = http://localhost:8084
-@authToken = Bearer your-jwt-token-here
+@authToken = 
 
 ### 1. Obtiene el carrito actual (GET)
 # Este endpoint obtiene el carrito activo del usuario autenticado
@@ -21,7 +21,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "serviceId": "",
   "quantity": 2
 }
 
@@ -33,7 +33,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "serviceId": "",
   "quantity": 1
 }
 
@@ -45,7 +45,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "serviceId": "",
   "quantity": 1
 }
 
