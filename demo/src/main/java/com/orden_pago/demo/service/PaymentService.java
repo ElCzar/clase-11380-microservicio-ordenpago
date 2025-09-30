@@ -68,8 +68,9 @@ public class PaymentService {
         Payment payment = createPaymentRecord(request, cart, userId);
 
         // Publicar evento de pago iniciado
-        kafkaMessagingService.publishPaymentEvent(
-                PaymentEventDTO.paymentInitiated(payment.getId(), cart.getId(), userId, payment.getAmount()));
+        // kafkaMessagingService.publishPaymentEvent(
+        // PaymentEventDTO.paymentInitiated(payment.getId(), cart.getId(), userId,
+        // payment.getAmount()));
 
         try {
             // Simular procesamiento de pago
@@ -83,16 +84,16 @@ public class PaymentService {
                 cartService.completeCart(cart);
 
                 // Publicar evento de pago exitoso
-                kafkaMessagingService.publishPaymentEvent(
-                        PaymentEventDTO.paymentSuccess(payment.getId(), cart.getId(), userId,
-                                payment.getAmount(), payment.getCardNumber()));
+                // kafkaMessagingService.publishPaymentEvent(
+                // PaymentEventDTO.paymentSuccess(payment.getId(), cart.getId(), userId,
+                // payment.getAmount(), payment.getCardNumber()));
 
                 log.info("Pago procesado exitosamente con transacción: {}", result.getTransactionId());
             } else {
                 // Publicar evento de pago fallido
-                kafkaMessagingService.publishPaymentEvent(
-                        PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
-                                payment.getAmount(), result.getMessage()));
+                // kafkaMessagingService.publishPaymentEvent(
+                // PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
+                // payment.getAmount(), result.getMessage()));
             }
 
             return PaymentResponse.builder()
@@ -109,9 +110,9 @@ public class PaymentService {
             paymentRepository.save(payment);
 
             // Publicar evento de pago fallido
-            kafkaMessagingService.publishPaymentEvent(
-                    PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
-                            payment.getAmount(), "Error interno procesando el pago"));
+            // kafkaMessagingService.publishPaymentEvent(
+            // PaymentEventDTO.paymentFailed(payment.getId(), cart.getId(), userId,
+            // payment.getAmount(), "Error interno procesando el pago"));
 
             return PaymentResponse.builder()
                     .status(PaymentStatus.FAILED)

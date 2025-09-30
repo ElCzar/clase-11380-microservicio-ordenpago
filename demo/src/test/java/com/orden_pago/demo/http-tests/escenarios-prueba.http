@@ -1,4 +1,4 @@
-### Pruebas con escenarios
+### Pruebas con escenarios completos - Orden de Pago
 ### Puerto: 8084
 
 ### Login with Basic User
@@ -17,8 +17,9 @@ Content-Type: application/json
 @baseUrl = http://localhost:8084
 @authToken = Bearer {{loginUser.response.body.accessToken}}
 
-
-### ESCENARIO 1: Un usuario compra múltiples servicios y se pagan exitosamente
+#########################################################################
+# ESCENARIO 1: COMPRA EXITOSA DE MÚLTIPLES SERVICIOS
+#########################################################################
 
 ### Prueba de seguridad
 GET http://localhost:8084/api/user/data
@@ -33,42 +34,39 @@ Content-Type: application/json
 
 ###
 
-### Agregar el primer servicio al carrito
+### Verificar carrito inicial
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Agregar primer servicio al carrito - Diseño Web
 POST {{ baseUrl }}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
   "quantity": 2
 }
 
 ###
 
-### Agregar el segundo servicio al carrito
+### Agregar segundo servicio al carrito - Marketing Digital
 POST {{ baseUrl }}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
   "quantity": 1
 }
 
 ###
 
-### Modificar cantidad del primer servicio
-PUT {{ baseUrl }}/api/cart/items/{itemId}
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "quantity": 3
-}
-
-###
-
 ### Verificar contenido del carrito
+# @name cartForPayment1
 GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -81,13 +79,13 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "",
+  "cartId": "{{cartForPayment1.response.body.id}}",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Pepito Perez",
+  "cardHolderName": "Test User",
   "expiryMonth": "12",
   "expiryYear": "2025",
-  "cvv": "1234"
+  "cvv": "123"
 }
 
 ###
@@ -99,8 +97,9 @@ Content-Type: application/json
 
 ###
 
-
-### ESCENARIO 2: Un usuario modifica el carrito sin realizar el pago y después lo elimina
+#########################################################################
+# ESCENARIO 2: MODIFICAR CARRITO SIN PAGO Y DESPUÉS ELIMINARLO
+#########################################################################
 
 ### Crear nuevo carrito con items
 POST {{baseUrl}}/api/cart/items
@@ -133,7 +132,7 @@ Content-Type: application/json
 
 ###
 
-### Remover un item específico
+### Remover un item específico (NOTA: Reemplazar {itemId} con ID real)
 DELETE {{baseUrl}}/api/cart/items/{itemId}
 Authorization: {{authToken}}
 
@@ -159,7 +158,9 @@ Content-Type: application/json
 
 ###
 
-### ESCENARIO 3: Un usuario intenta varios pagos
+#########################################################################
+# ESCENARIO 3: MÚLTIPLES INTENTOS DE PAGO
+#########################################################################
 
 ### Crear carrito para pago
 POST {{baseUrl}}/api/cart/items
@@ -167,36 +168,50 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440005",
   "quantity": 1
 }
 
 ###
 
-### Primer intento de pago (puede fallar por simulación)
+### Verificar carrito antes del pago
+# @name cartForPayment3
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Primer intento de pago - Tarjeta de Crédito
 POST {{baseUrl}}/api/payment/simulate
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "",
+  "cartId": "{{cartForPayment3.response.body.id}}",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Pedro Pascal"
+  "cardHolderName": "Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
 }
 
 ###
 
-### Segundo intento de pago si el primero falló
+### Segundo intento de pago con PayPal (si el primero falló)
 POST {{baseUrl}}/api/payment/simulate
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "",
+  "cartId": "{{cartForPayment3.response.body.id}}",
   "method": "PAYPAL",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Pedro Pascal"
+  "cardHolderName": "Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
 }
 
 ###
@@ -207,10 +222,13 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "",
+  "cartId": "{{cartForPayment3.response.body.id}}",
   "method": "BANK_TRANSFER",
   "cardNumber": "1234567890123456",
-  "cardHolderName": "Pedro Pascal"
+  "cardHolderName": "Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
 }
 
 ###
@@ -222,14 +240,9 @@ Content-Type: application/json
 
 ###
 
-### Obtener estadísticas de pagos del usuario
-GET {{baseUrl}}/api/payment/stats
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### ESCENARIO 4: Pruebas de concurrencia (múltiples carritos)
+#########################################################################
+# ESCENARIO 4: PRUEBAS DE CONCURRENCIA (MÚLTIPLES CARRITOS)
+#########################################################################
 
 ### Crear primer carrito
 POST {{baseUrl}}/api/cart/items
@@ -237,9 +250,17 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440006",
   "quantity": 1
 }
+
+###
+
+### Verificar primer carrito
+# @name firstConcurrentCart
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
 
 ###
 
@@ -249,10 +270,13 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "",
+  "cartId": "{{firstConcurrentCart.response.body.id}}",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Usuario Multitarea"
+  "cardHolderName": "Usuario Multitarea",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
 }
 
 ###
@@ -263,7 +287,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440007",
   "quantity": 2
 }
 
@@ -283,7 +307,9 @@ Content-Type: application/json
 
 ###
 
-### ESCENARIO 5: Validación de seguridad 
+#########################################################################
+# ESCENARIO 5: VALIDACIÓN DE SEGURIDAD
+#########################################################################
 
 ### Intentar acceso sin token
 GET {{baseUrl}}/api/cart
@@ -297,7 +323,7 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
   "quantity": -1
 }
 
@@ -309,16 +335,19 @@ Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "cartId": "00000000",
+  "cartId": "00000000-0000-0000-0000-000000000000",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Usuario 123"
+  "cardHolderName": "Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
 }
 
 ###
 
 ### Intentar modificar item que no existe
-PUT {{baseUrl}}/api/cart/items/00000000
+PUT {{baseUrl}}/api/cart/items/00000000-0000-0000-0000-000000000000
 Authorization: {{authToken}}
 Content-Type: application/json
 

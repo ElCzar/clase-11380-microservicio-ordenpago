@@ -33,7 +33,7 @@ public class KafkaMessagingService {
      */
     public CompletableFuture<ServiceResponseDTO> requestServiceInfo(UUID serviceId) {
         String requestId = UUID.randomUUID().toString();
-        ServiceRequestDTO request = new ServiceRequestDTO(serviceId, requestId, "carrito-compras-service");
+        // ServiceRequestDTO request = new ServiceRequestDTO(serviceId, requestId, "carrito-compras-service");
 
         // Crear el CompletableFuture que se resolverá cuando llegue la respuesta
         CompletableFuture<ServiceResponseDTO> future = new CompletableFuture<>();
@@ -51,7 +51,8 @@ public class KafkaMessagingService {
                 });
 
         // Enviar el mensaje
-        boolean sent = streamBridge.send("serviceRequest-out-0", request);
+        // boolean sent = streamBridge.send("serviceRequest-out-0", request);
+        boolean sent = false;
         if (!sent) {
             pendingRequests.remove(requestId);
             future.completeExceptionally(new RuntimeException("No se pudo enviar la solicitud de servicio"));
@@ -85,7 +86,8 @@ public class KafkaMessagingService {
      * Publica evento de carrito
      */
     public void publishCartEvent(CartEventDTO event) {
-        boolean sent = streamBridge.send("cartEvent-out-0", event);
+        // boolean sent = streamBridge.send("cartEvent-out-0", event);
+        boolean sent = false;
         if (sent) {
             log.info("Evento de carrito publicado: {} para carrito {}", event.getEventType(), event.getCartId());
         } else {
@@ -97,7 +99,8 @@ public class KafkaMessagingService {
      * Publica evento de pago
      */
     public void publishPaymentEvent(PaymentEventDTO event) {
-        boolean sent = streamBridge.send("paymentEvent-out-0", event);
+        // boolean sent = streamBridge.send("paymentEvent-out-0", event);
+        boolean sent = false; // Comentado temporalmente
         if (sent) {
             log.info("Evento de pago publicado: {} para pago {}", event.getEventType(), event.getPaymentId());
         } else {

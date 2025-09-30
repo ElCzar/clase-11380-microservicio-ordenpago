@@ -3,7 +3,6 @@ package com.orden_pago.demo.service.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orden_pago.demo.dto.ServiceResponseDTO;
 import com.orden_pago.demo.service.CartService;
-import com.orden_pago.demo.service.kafka.KafkaMessagingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +26,7 @@ import java.util.function.Consumer;
 public class ServiceKafkaConsumer {
 
     private final CartService cartService;
-    // private final KafkaMessagingService kafkaMessagingService; // TODO: Habilitar
-    // cuando esté disponible
+    private final KafkaMessagingService kafkaMessagingService; 
     private final ObjectMapper objectMapper;
 
     /**
@@ -56,11 +54,9 @@ public class ServiceKafkaConsumer {
                 // Procesar la respuesta del servicio
                 processServiceResponse(serviceResponse);
 
-                // También manejar request/response asíncrono si existe requestId
-                // TODO: Habilitar cuando KafkaMessagingService esté disponible
-                // if (serviceResponse.getRequestId() != null) {
-                // kafkaMessagingService.handleServiceResponse(serviceResponse);
-                // }
+                if (serviceResponse.getRequestId() != null) {
+                    kafkaMessagingService.handleServiceResponse(serviceResponse);
+                }
 
                 log.info("Respuesta de servicio procesada exitosamente. ServiceId: {}",
                         serviceResponse.getServiceId());

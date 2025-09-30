@@ -70,19 +70,30 @@ public class CartService {
         Cart cart = getCurrentCart(authentication);
 
         // Solicitar información del servicio a través de Kafka
-        return kafkaMessagingService.requestServiceInfo(serviceId)
-                .thenCompose(serviceResponse -> {
-                    if (serviceResponse.getErrorMessage() != null) {
-                        throw new RuntimeException(
-                                "Error al obtener información del servicio: " + serviceResponse.getErrorMessage());
-                    }
+        // return kafkaMessagingService.requestServiceInfo(serviceId)
+        // .thenCompose(serviceResponse -> {
+        // if (serviceResponse.getErrorMessage() != null) {
+        // throw new RuntimeException(
+        // "Error al obtener información del servicio: " +
+        // serviceResponse.getErrorMessage());
+        // }
 
-                    if (!serviceResponse.getAvailable()) {
-                        throw new RuntimeException("Servicio no disponible: " + serviceId);
-                    }
+        // if (!serviceResponse.getAvailable()) {
+        // throw new RuntimeException("Servicio no disponible: " + serviceId);
+        // }
 
-                    return addItemToCartInternal(cart, serviceResponse, quantity, userId);
-                });
+        // return addItemToCartInternal(cart, serviceResponse, quantity, userId);
+        // });
+
+        // Simulación temporal sin Kafka - crear respuesta mock
+        ServiceResponseDTO mockResponse = new ServiceResponseDTO();
+        mockResponse.setId(serviceId);
+        mockResponse.setTitle("Servicio Mock");
+        mockResponse.setDescription("Servicio temporal para pruebas sin Kafka");
+        mockResponse.setPrice(java.math.BigDecimal.valueOf(100.0));
+        mockResponse.setIsActive(true);
+
+        return addItemToCartInternal(cart, mockResponse, quantity, userId);
     }
 
     /**
@@ -118,9 +129,10 @@ public class CartService {
                 log.info("Cantidad actualizada para item existente. Nueva cantidad: {}", item.getQuantity());
 
                 // Publicar evento de actualización
-                kafkaMessagingService.publishCartEvent(
-                        CartEventDTO.itemUpdated(cart.getId(), userId, serviceId, item.getServiceName(),
-                                item.getQuantity(), item.getSubtotal()));
+                // kafkaMessagingService.publishCartEvent(
+                // CartEventDTO.itemUpdated(cart.getId(), userId, serviceId,
+                // item.getServiceName(),
+                // item.getQuantity(), item.getSubtotal()));
             } else {
                 // Crear nuevo item con información completa del servicio
                 CartItem newItem = new CartItem();
@@ -141,9 +153,11 @@ public class CartService {
                         item.getId(), item.getServiceName(), item.getServiceCategory());
 
                 // Publicar evento de item agregado con información completa
-                kafkaMessagingService.publishCartEvent(
-                        CartEventDTO.itemAdded(cart.getId(), userId, serviceId, item.getServiceName(),
-                                item.getServiceCategory(), item.getServicePrice(), quantity, item.getSubtotal()));
+                // kafkaMessagingService.publishCartEvent(
+                // CartEventDTO.itemAdded(cart.getId(), userId, serviceId,
+                // item.getServiceName(),
+                // item.getServiceCategory(), item.getServicePrice(), quantity,
+                // item.getSubtotal()));
             }
 
             // Actualizar timestamp del carrito
@@ -172,9 +186,9 @@ public class CartService {
         cartRepository.save(cart);
 
         // Publicar evento de actualización
-        kafkaMessagingService.publishCartEvent(
-                CartEventDTO.itemUpdated(cart.getId(), cart.getUserId(), item.getServiceId(),
-                        item.getServiceName(), newQuantity, item.getSubtotal()));
+        // kafkaMessagingService.publishCartEvent(
+        // CartEventDTO.itemUpdated(cart.getId(), cart.getUserId(), item.getServiceId(),
+        // item.getServiceName(), newQuantity, item.getSubtotal()));
 
         log.info("Cantidad del item actualizada exitosamente");
         return updatedItem;
@@ -200,8 +214,9 @@ public class CartService {
         cartRepository.save(cart);
 
         // Publicar evento de item removido
-        kafkaMessagingService.publishCartEvent(
-                CartEventDTO.itemRemoved(cart.getId(), cart.getUserId(), serviceId, serviceName));
+        // kafkaMessagingService.publishCartEvent(
+        // CartEventDTO.itemRemoved(cart.getId(), cart.getUserId(), serviceId,
+        // serviceName));
 
         log.info("Item removido del carrito exitosamente");
     }
@@ -222,8 +237,8 @@ public class CartService {
             cartRepository.save(cart);
 
             // Publicar evento de carrito vaciado
-            kafkaMessagingService.publishCartEvent(
-                    CartEventDTO.cartCleared(cart.getId(), userId));
+            // kafkaMessagingService.publishCartEvent(
+            // CartEventDTO.cartCleared(cart.getId(), userId));
 
             log.info("Carrito vaciado exitosamente");
         }

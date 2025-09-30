@@ -1,58 +1,142 @@
 ### Pruebas de endpoints del Carrito de Compras
-### Microservicio: carrito-compras-service
+### Microservicio: orden-pago-service
 ### Puerto: 8084
 
 # Variables de entorno
 @baseUrl = http://localhost:8084
-@authToken = 
+@perfilUrl = http://localhost:8081
 
-### 1. Obtiene el carrito actual (GET)
-# Este endpoint obtiene el carrito activo del usuario autenticado
-GET {{baseUrl}}/api/v1/cart
+#########################################################################
+# SECCIÓN 1: AUTENTICACIÓN
+#########################################################################
+
+### PASO 1: Login con usuario existente
+# @name loginUser
+POST {{perfilUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+### PASO 2: Registrar usuario si el login anterior falla
+# @name registerUser  
+POST {{perfilUrl}}/auth/register/user
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "testuser@example.com",
+  "firstName": "Test",
+  "lastName": "User",
+  "password": "password123",
+  "age": 25,
+  "photo": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+  "description": "Usuario de prueba para carrito"
+}
+
+### PASO 3: Login después del registro
+# @name loginAfterRegister
+POST {{perfilUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+# Token de autenticación
+@authToken = Bearer {{ loginUser.response.body.accessToken }}
+
+#########################################################################
+# SECCIÓN 2: VERIFICACIÓN DE SALUD Y CARRITO INICIAL
+#########################################################################
+
+### 1. Verificar salud del servicio
+GET {{baseUrl}}/actuator/health
+Content-Type: application/json
+
+###
+
+### 2. Verificar carrito inicial (debe estar vacío)
+# @name initialCart
+GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-### 2. Agrega un nuevo item al carrito (POST)
-# Agrega un nuevo item al carrito o incrementa la cantidad si ya existe
-POST {{baseUrl}}/api/v1/cart/items
+#########################################################################
+# SECCIÓN 3: AGREGAR SERVICIOS AL CARRITO
+#########################################################################
+
+### 3. Agregar primer servicio al carrito
+# @name addService1
+POST {{baseUrl}}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
   "quantity": 2
 }
 
 ###
 
-### 3. Agrega un item diferente al carrito (POST)
-POST {{baseUrl}}/api/v1/cart/items
+### 4. Agregar segundo servicio al carrito
+# @name addService2
+POST {{baseUrl}}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
   "quantity": 1
 }
 
 ###
 
-### 4. Agrega un item existente para incrementar cantidad (POST)
-POST {{baseUrl}}/api/v1/cart/items
+### 5. Agregar tercer servicio al carrito
+# @name addService3
+POST {{baseUrl}}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "",
+  "serviceId": "550e8400-e29b-41d4-a716-446655440003",
+  "quantity": 3
+}
+
+###
+
+### 6. Verificar carrito con items agregados
+# @name cartWithItems
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+#########################################################################
+# SECCIÓN 4: MODIFICAR CARRITO
+#########################################################################
+
+### 7. Incrementar cantidad del primer servicio (agregando más del mismo)
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
   "quantity": 1
 }
 
 ###
 
-### 5. Actualiza la cantidad de un item (PUT)
-PUT {{baseUrl}}/api/v1/cart/items/{itemId}
+### 8. Actualizar cantidad específica de un item
+# Nota: Reemplaza {itemId} con el ID real del item obtenido del carrito
+PUT {{baseUrl}}/api/cart/items/{itemId}
 Authorization: {{authToken}}
 Content-Type: application/json
 
@@ -62,41 +146,118 @@ Content-Type: application/json
 
 ###
 
-### 6. Obtiene un carrito con items ya creados (GET)
-GET {{baseUrl}}/api/v1/cart
+### 9. Verificar carrito después de modificaciones
+GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-### 7. Obtiene el historial de carritos (GET)
-GET {{baseUrl}}/api/v1/cart/history
+#########################################################################
+# SECCIÓN 5: OBTENER INFORMACIÓN DEL CARRITO
+#########################################################################
+
+### 10. Obtener historial de carritos del usuario
+GET {{baseUrl}}/api/cart/history
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-### 8. Elimina un item específico del carrito (DELETE)
-DELETE {{baseUrl}}/api/v1/cart/items/{itemId}
+#########################################################################
+# SECCIÓN 6: ELIMINAR ITEMS DEL CARRITO
+#########################################################################
+
+### 11. Eliminar un item específico del carrito
+# Nota: Reemplaza {itemId} con el ID real del item que quieres eliminar
+DELETE {{baseUrl}}/api/cart/items/{itemId}
 Authorization: {{authToken}}
 
 ###
 
-### 9. Obtiene el carrito después de eliminar un item (GET)
-GET {{baseUrl}}/api/v1/cart
+### 12. Verificar carrito después de eliminar item
+GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-### 10. Elimina un carrito completamente (DELETE)
-DELETE {{baseUrl}}/api/v1/cart
+### 13. Vaciar carrito completamente
+DELETE {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 
 ###
 
-### 11. Verifica el carrito vacío (GET)
-GET {{baseUrl}}/api/v1/cart
+### 14. Verificar carrito vacío
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+#########################################################################
+# SECCIÓN 7: FLUJO COMPLETO DE CARRITO + PAGO
+#########################################################################
+
+### 15. Recrear carrito para el flujo de pago
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "quantity": 2
+}
+
+###
+
+### 16. Agregar más servicios para pago
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
+  "quantity": 1
+}
+
+###
+
+### 17. Verificar carrito final antes del pago
+# @name finalCart
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 18. Simular pago del carrito
+# @name paymentSimulation
+POST {{baseUrl}}/api/payment/simulate
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "cartId": "{{ finalCart.response.body.id }}",
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123"
+}
+
+###
+
+### 19. Verificar historial de pagos
+GET {{baseUrl}}/api/payment/history
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### 20. Verificar estado del carrito después del pago
+GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
 
