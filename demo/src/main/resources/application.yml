@@ -1,6 +1,6 @@
 spring:
   application:
-    name: carrito-compras-service
+    name: demo
   security:
     oauth2:
       resourceserver:
@@ -20,9 +20,9 @@ spring:
   h2:
     console:
       enabled: true
-  # Configuración de Kafka
   cloud:
     stream:
+      # General Kafka Configuration
       kafka:
         binder:
           brokers: localhost:9092
@@ -34,12 +34,34 @@ spring:
             "[value.deserializer]": org.springframework.kafka.support.serializer.JsonDeserializer
             "[spring.json.trusted.packages]": "*"
       bindings:
+        # Consumer binding for service responses FROM marketplace
+        serviceResponse-in-0:
+          destination: service-response-topic
+          content-type: application/json
+          group: orden-pago-microservice-group
+        # Producer binding for service requests TO marketplace
         serviceRequest-out-0:
           destination: service-request-topic
           content-type: application/json
 
-server:
-    port: 8084
+# Keycloak Configuration
+keycloak:
+  realm: microservices-ecosystem
+  auth-server-url: http://localhost:8180
+  ssl-required: external
+  resource: ordenpago-service
+  credentials:
+    secret: kuYJVLbl6T0uJX0YYw8jAD9Nt7f48vAf
+  use-resource-role-mappings: true
+  bearer-only: true
+
+
+# Kafka Topics Configuration
+kafka:
+  topics:
+    service-request: service-request-topic
+    service-response: service-response-topic
+
 
 management:
   endpoints:
@@ -51,13 +73,15 @@ management:
 
   endpoint:
     health:
-      # Adds an endpoint to monitor service health
       # /actuator/health
       show-details: always
 
   info:
     env:
       enabled: true
+
+server:
+    port: 8084
 
 # Configuración para simulación de pagos
 payment:

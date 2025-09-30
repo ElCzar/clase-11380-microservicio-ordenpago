@@ -6,6 +6,7 @@ import com.orden_pago.demo.enums.CartStatus;
 import com.orden_pago.demo.model.Cart;
 import com.orden_pago.demo.model.CartItem;
 import com.orden_pago.demo.repository.CartRepository;
+import com.orden_pago.demo.service.kafka.KafkaMessagingService;
 import com.orden_pago.demo.repository.CartItemRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -283,5 +284,66 @@ public class CartService {
             return description;
         }
         return description.substring(0, 997) + "...";
+    }
+
+    /**
+     * Actualiza la información de un servicio en los items del carrito
+     * Se llama cuando se recibe una respuesta del microservicio marketplace via
+     * Kafka
+     * 
+     * @param serviceResponse Información del servicio recibida del marketplace
+     */
+    public void updateServiceInfo(ServiceResponseDTO serviceResponse) {
+        try {
+            log.info("Actualizando información del servicio {} en carritos activos",
+                    serviceResponse.getServiceId());
+
+            // Buscar todos los items del carrito que contengan este servicio
+            List<CartItem> allItems = cartItemRepository
+                    .findByServiceId(serviceResponse.getServiceId());
+
+            // Filtrar solo items de carritos activos
+            List<CartItem> itemsToUpdate = allItems.stream()
+                    .filter(item -> item.getCart().getStatus() == CartStatus.ACTIVE)
+                    .toList();
+
+            if (itemsToUpdate.isEmpty()) {
+                log.debug("No se encontraron items activos para el servicio {}",
+                        serviceResponse.getServiceId());
+                return;
+            }
+
+            // Actualizar información en cada item
+            for (CartItem item : itemsToUpdate) {
+                updateCartItemWithServiceInfo(item, serviceResponse);
+            }
+
+            // Guardar todos los cambios
+            cartItemRepository.saveAll(itemsToUpdate);
+
+            log.info("Actualizada información del servicio {} en {} items del carrito",
+                    serviceResponse.getServiceId(), itemsToUpdate.size());
+
+        } catch (Exception e) {
+            log.error("Error actualizando información del servicio {}: {}",
+                    serviceResponse.getServiceId(), e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Actualiza un item específico del carrito con la información del servicio
+     */
+    private void updateCartItemWithServiceInfo(CartItem item, ServiceResponseDTO serviceResponse) {
+        // Actualizar campos de información del servicio
+        item.setServiceName(serviceResponse.getName());
+        item.setServiceDescription(truncateDescription(serviceResponse.getDescription()));
+        item.setServicePrice(serviceResponse.getPrice());
+        item.setAverageRating(serviceResponse.getAverageRating());
+        item.setServiceCategory(serviceResponse.getCategoryName());
+        item.setServiceImageUrl(serviceResponse.getPrimaryImageUrl());
+
+        log.debug("Actualizado item del carrito {} con información del servicio {}",
+                item.getId(), serviceResponse.getServiceId());
     }
 }

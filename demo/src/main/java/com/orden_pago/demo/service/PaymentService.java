@@ -9,6 +9,8 @@ import com.orden_pago.demo.model.Cart;
 import com.orden_pago.demo.model.Payment;
 import com.orden_pago.demo.repository.CartRepository;
 import com.orden_pago.demo.repository.PaymentRepository;
+import com.orden_pago.demo.service.kafka.KafkaMessagingService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;

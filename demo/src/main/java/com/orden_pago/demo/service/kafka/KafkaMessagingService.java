@@ -1,4 +1,4 @@
-package com.orden_pago.demo.service;
+package com.orden_pago.demo.service.kafka;
 
 import com.orden_pago.demo.dto.CartEventDTO;
 import com.orden_pago.demo.dto.PaymentEventDTO;
