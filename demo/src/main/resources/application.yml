@@ -25,7 +25,7 @@ spring:
       # General Kafka Configuration
       kafka:
         binder:
-          brokers: localhost:9092
+          brokers: localhost:9093
           auto-create-topics: true
           configuration:
             "[key.serializer]": org.apache.kafka.common.serialization.StringSerializer
