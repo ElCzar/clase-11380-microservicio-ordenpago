@@ -2,6 +2,7 @@ package com.orden_pago.demo.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -16,7 +17,8 @@ public class AuthController {
     @GetMapping("/user/data")
     @PreAuthorize("hasRole('USER')")
     public String getUserData(Authentication auth) {
-        return "User data for: " + auth.getName();
+        String preferredUsername = getPreferredUsername(auth);
+        return "User data for: " + preferredUsername + " (auth name: " + auth.getName() + ")";
     }
 
     @GetMapping("/provider/dashboard")
@@ -34,7 +36,20 @@ public class AuthController {
     @GetMapping("/profile")
     @PreAuthorize("hasAnyRole('USER', 'PROVIDER', 'ADMIN')")
     public String getProfile(Authentication auth) {
-        return "Profile for: " + auth.getName();
+        String preferredUsername = getPreferredUsername(auth);
+        return "Profile for: " + preferredUsername;
+    }
+
+    /**
+     * Extracts the preferred_username from JWT token
+     */
+    private String getPreferredUsername(Authentication auth) {
+        if (auth instanceof JwtAuthenticationToken jwtToken) {
+            // Get preferred_username claim from JWT
+            String preferredUsername = jwtToken.getToken().getClaimAsString("preferred_username");
+            return preferredUsername != null ? preferredUsername : auth.getName();
+        }
+        return auth.getName();
     }
     
 }

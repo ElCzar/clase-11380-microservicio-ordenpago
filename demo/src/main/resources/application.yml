@@ -5,7 +5,8 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8180/realms/microservices-ecosystem
+          # Remove issuer-uri to skip issuer validation and allow tokens from any microservice
+          # issuer-uri: http://localhost:8180/realms/microservices-ecosystem
           jwk-set-uri: http://localhost:8180/realms/microservices-ecosystem/protocol/openid-connect/certs
   datasource:
     url: jdbc:h2:mem:payment

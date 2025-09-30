@@ -1,11 +1,31 @@
 ### Pruebas con escenarios
 ### Puerto: 8084
 
+### Login with Basic User
+# @name loginUser
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
 # Variables de entorno
 @baseUrl = http://localhost:8084
-@authToken = 
+@authToken = Bearer {{loginUser.response.body.accessToken}}
+
 
 ### ESCENARIO 1: Un usuario compra múltiples servicios y se pagan exitosamente
+
+### Prueba de seguridad
+GET http://localhost:8084/api/user/data
+Content-Type: application/json
+Authorization: {{authToken}}
+
+###
 
 ### Verificar la salud del servicio
 GET {{ baseUrl }}/actuator/health
