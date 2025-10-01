@@ -50,7 +50,7 @@ spring:
 keycloak:
   realm: microservices-ecosystem
   auth-server-url: http://localhost:8180
-  ssl-required: external
+  ssl-required: none
   resource: ordenpago-service
   credentials:
     secret: kuYJVLbl6T0uJX0YYw8jAD9Nt7f48vAf
