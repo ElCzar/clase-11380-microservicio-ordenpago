@@ -12,7 +12,8 @@ import java.util.UUID;
 /**
  * DTO para recibir respuestas de servicios vía Kafka desde el microservicio
  * marketplace
- * Estructura simple que coincide exactamente con el formato del marketplace
+ * Estructura actualizada que coincide EXACTAMENTE con el formato del
+ * marketplace
  */
 @Data
 @NoArgsConstructor
@@ -20,13 +21,14 @@ import java.util.UUID;
 @Builder
 public class ServiceResponseDTO {
 
-    // Campos para correlación de mensajes
+    // Campos para correlación de mensajes (internos del sistema)
     @JsonProperty("requestId")
     private String requestId;
 
     @JsonProperty("errorMessage")
     private String errorMessage;
 
+    // Campos que vienen de Kafka del marketplace
     @JsonProperty("id")
     private UUID id;
 
@@ -42,20 +44,34 @@ public class ServiceResponseDTO {
     @JsonProperty("averageRating")
     private Double averageRating;
 
+    // IDs de entidades relacionadas
+    @JsonProperty("categoryId")
+    private UUID categoryId;
+
     @JsonProperty("categoryName")
     private String categoryName;
 
-    @JsonProperty("isActive")
-    private Boolean isActive;
+    @JsonProperty("statusId")
+    private UUID statusId;
+
+    @JsonProperty("statusName")
+    private String statusName;
+
+    @JsonProperty("countryId")
+    private UUID countryId;
 
     @JsonProperty("countryName")
     private String countryName;
 
+    // Campos adicionales que pueden venir del marketplace
     @JsonProperty("countryCode")
     private String countryCode;
 
     @JsonProperty("primaryImageUrl")
     private String primaryImageUrl;
+
+    @JsonProperty("isActive")
+    private Boolean isActive;
 
     // Métodos de conveniencia para compatibilidad con código existente
     public Boolean isAvailable() {
@@ -92,13 +108,23 @@ public class ServiceResponseDTO {
 
     /**
      * Valida que todos los campos requeridos para el carrito estén presentes
+     * ACTUALIZADO: categoryName puede ser null, usamos "General" como fallback
      */
     public boolean isValidForCart() {
         return id != null &&
                 title != null && !title.trim().isEmpty() &&
                 price != null &&
-                price.compareTo(BigDecimal.ZERO) >= 0 &&
-                categoryName != null && !categoryName.trim().isEmpty();
+                price.compareTo(BigDecimal.ZERO) >= 0;
+        // Removido categoryName como requerido porque puede venir null desde Kafka
+    }
+
+    /**
+     * Obtiene un nombre de categoría seguro (nunca null)
+     */
+    public String getSafeCategoryName() {
+        return categoryName != null && !categoryName.trim().isEmpty()
+                ? categoryName
+                : "General";
     }
 
     /**

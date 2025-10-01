@@ -185,7 +185,7 @@ public class CartService {
             newItem.setServiceName(serviceResponse.getName()); // title
             newItem.setServiceDescription(truncateDescription(serviceResponse.getSafeDescription()));
             newItem.setServicePrice(serviceResponse.getPrice());
-            newItem.setServiceCategory(serviceResponse.getCategoryName());
+            newItem.setServiceCategory(serviceResponse.getSafeCategoryName()); // Uso método seguro
             newItem.setServiceImageUrl(serviceResponse.getSafePrimaryImageUrl());
             newItem.setAverageRating(serviceResponse.getSafeAverageRating());
             newItem.setQuantity(quantity);
@@ -259,7 +259,7 @@ public class CartService {
                 newItem.setServiceName(serviceResponse.getName()); // title
                 newItem.setServiceDescription(truncateDescription(serviceResponse.getSafeDescription()));
                 newItem.setServicePrice(serviceResponse.getPrice());
-                newItem.setServiceCategory(serviceResponse.getCategoryName());
+                newItem.setServiceCategory(serviceResponse.getSafeCategoryName()); // Uso método seguro
                 newItem.setServiceImageUrl(serviceResponse.getSafePrimaryImageUrl());
                 newItem.setAverageRating(serviceResponse.getSafeAverageRating());
                 newItem.setQuantity(quantity);
@@ -482,7 +482,7 @@ public class CartService {
         item.setServiceDescription(truncateDescription(serviceResponse.getDescription()));
         item.setServicePrice(serviceResponse.getPrice());
         item.setAverageRating(serviceResponse.getAverageRating());
-        item.setServiceCategory(serviceResponse.getCategoryName());
+        item.setServiceCategory(serviceResponse.getSafeCategoryName()); // Uso método seguro
         item.setServiceImageUrl(serviceResponse.getPrimaryImageUrl());
 
         log.debug("Actualizado item del carrito {} con información del servicio {}",
