@@ -265,25 +265,26 @@ public class CartController {
     }
 
     /**
-     * GET /api/cart/items/mock/catalog - Listar servicios quemados disponibles
-     * Endpoint para ver qué servicios de prueba están disponibles
+     * GET /api/cart/items/available - Listar servicios disponibles desde el repositorio
+     * Endpoint que muestra servicios que fueron previamente procesados desde Kafka
      */
-    @GetMapping("/items/mock/catalog")
-    public ResponseEntity<List<ServiceResponseDTO>> getMockServicesCatalog() {
+    @GetMapping("/items/available")
+    public ResponseEntity<List<ServiceResponseDTO>> getAvailableServices() {
         try {
-            log.info("📋 Listando catálogo de servicios quemados para pruebas");
+            log.info("📋 Listando servicios disponibles desde el repositorio");
 
-            List<ServiceResponseDTO> catalog = List.of(
-                    createMockServiceByCategory("ALOJAMIENTO"),
-                    createMockServiceByCategory("ALIMENTACION"),
-                    createMockServiceByCategory("TRANSPORTE"),
-                    createMockServiceByCategory("ECOTOUR"),
-                    createMockServiceByCategory("GENERAL"));
-
-            return ResponseEntity.ok(catalog);
+            List<ServiceResponseDTO> availableServices = cartService.getAvailableServicesFromRepository();
+            
+            if (availableServices.isEmpty()) {
+                log.warn("⚠️ No se encontraron servicios disponibles en el repositorio");
+                return ResponseEntity.ok(availableServices); // Devolver lista vacía con 200 OK
+            }
+            
+            log.info("✅ Encontrados {} servicios disponibles", availableServices.size());
+            return ResponseEntity.ok(availableServices);
 
         } catch (Exception e) {
-            log.error("❌ Error obteniendo catálogo de servicios quemados: {}", e.getMessage());
+            log.error("❌ Error obteniendo servicios disponibles: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

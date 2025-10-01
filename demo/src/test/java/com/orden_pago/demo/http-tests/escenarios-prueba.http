@@ -18,15 +18,138 @@ Content-Type: application/json
 @authToken = Bearer {{loginUser.response.body.accessToken}}
 
 #########################################################################
-# ESCENARIO 1: COMPRA EXITOSA DE MÚLTIPLES SERVICIOS
+# SAMPLE: CREATE CART ITEM WITH SPECIFIC ID
 #########################################################################
 
+### Create cart item with specific service ID: 26236648-7432-4bf8-bca5-acafaf6edcf5
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "174306ef-6ebc-47fb-a900-1a4755ddd0d3",
+  "quantity": 1
+}
+
 ###
-GET {{baseUrl}}/api/cart/items/mock/catalog
+
+### Verify cart after adding the specific item
+GET {{baseUrl}}/api/cart/items/available
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Add same service with different quantity to test behavior
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "7e860ed3-b4c5-4266-8dac-b401396ac2b2",
+  "quantity": 2
+}
+
+###
+
+### Verify cart content again
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+#########################################################################
+# AVAILABLE SERVICES TESTING - Repository-based services from Kafka
+#########################################################################
+### Test 1: Get available services from repository (services processed from Kafka)
+# @name availableServices
+GET {{baseUrl}}/api/cart/items/available
 Content-Type: application/json
 Authorization: {{authToken}}
 
-### Prueba de seguridad
+###
+
+### Test 2: Verify the structure of available services response
+GET {{baseUrl}}/api/cart/items/available
+Content-Type: application/json
+Authorization: {{authToken}}
+
+###
+
+### Test 3: Get available services without authentication (should fail)
+GET {{baseUrl}}/api/cart/items/available
+Content-Type: application/json
+
+###
+
+### Test 4: Add a service from available services to cart (using fallback ID)
+### Note: Using a known serviceId from mock data, replace with actual ID from response if needed
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "26236648-7432-4bf8-bca5-acafaf6edcf5",
+  "quantity": 1
+}
+
+###
+
+### Test 5: Verify cart after adding available service
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Test 6: Check if services show up in available list after adding to cart (should still be available)
+GET {{baseUrl}}/api/cart/items/available
+Content-Type: application/json
+Authorization: {{authToken}}
+
+###
+
+### Test 7: Test adding multiple quantities of the same available service
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "26236648-7432-4bf8-bca5-acafaf6edcf5",
+  "quantity": 3
+}
+
+###
+
+### Test 8: Test adding a non-existent service (should fail)
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "00000000-0000-0000-0000-000000000000",
+  "quantity": 1
+}
+
+###
+
+### Test 9: Final verification - check both cart and available services
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}/api/cart/items/available
+Content-Type: application/json
+Authorization: {{authToken}}
+
+###
+
+#########################################################################
+# ESCENARIO 1: COMPRA EXITOSA DE MÚLTIPLES SERVICIOS
+######################################################################### Prueba de seguridad
 GET http://localhost:8084/api/user/data
 Content-Type: application/json
 Authorization: {{authToken}}
@@ -313,49 +436,21 @@ Content-Type: application/json
 ###
 
 #########################################################################
-# ESCENARIO 5: VALIDACIÓN DE SEGURIDAD
+# ESCENARIO 5: Pagos
 #########################################################################
 
-### Intentar acceso sin token
-GET {{baseUrl}}/api/cart
-Content-Type: application/json
-
-###
-
-### Intentar agregar item con datos inválidos
-POST {{baseUrl}}/api/cart/items
+### Procesar pago
+POST {{baseUrl}}/api/cart/checkout
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
-  "quantity": -1
-}
-
-###
-
-### Intentar pago con carrito inexistente
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "00000000-0000-0000-0000-000000000000",
   "method": "CREDIT_CARD",
   "cardNumber": "4532123456789012",
-  "cardHolderName": "Test User",
+  "cardHolderName": "Kafka Test User",
   "expiryMonth": "12",
-  "expiryYear": "2025",
+  "expiryYear": "2028",
   "cvv": "123"
 }
 
 ###
-
-### Intentar modificar item que no existe
-PUT {{baseUrl}}/api/cart/items/00000000-0000-0000-0000-000000000000
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "quantity": 5
-}
