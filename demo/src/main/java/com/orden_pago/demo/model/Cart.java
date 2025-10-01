@@ -1,6 +1,5 @@
 package com.orden_pago.demo.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.orden_pago.demo.enums.CartStatus;
 import jakarta.persistence.*;
 import lombok.Data;

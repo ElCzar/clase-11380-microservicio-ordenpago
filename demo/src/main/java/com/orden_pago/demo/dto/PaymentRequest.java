@@ -10,7 +10,6 @@ import java.util.UUID;
 public class PaymentRequest {
     // Datos de la tarjeta
 
-    // Cart ID será configurado automáticamente por el controlador de checkout
     private UUID cartId;
 
     @NotNull(message = "Payment method is required")

@@ -12,8 +12,6 @@ import java.util.UUID;
 /**
  * DTO para recibir respuestas de servicios vía Kafka desde el microservicio
  * marketplace
- * Estructura actualizada que coincide EXACTAMENTE con el formato del
- * marketplace
  */
 @Data
 @NoArgsConstructor

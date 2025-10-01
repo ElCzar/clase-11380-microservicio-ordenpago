@@ -10,15 +10,13 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.function.Consumer;
 
 /**
  * ServiceKafkaConsumer - Consumidor Kafka para respuestas del microservicio
  * marketplace
- * 
- * Este servicio recibe respuestas del microservicio de marketplace (servicios)
- * a través del topic 'service-response-topic' cuando se solicita información
- * de servicios para el carrito de compras.
  */
 @Service
 @Slf4j
@@ -26,32 +24,34 @@ import java.util.function.Consumer;
 public class ServiceKafkaConsumer {
 
     private final CartService cartService;
-    private final KafkaMessagingService kafkaMessagingService; 
+    private final KafkaMessagingService kafkaMessagingService;
     private final ObjectMapper objectMapper;
 
     /**
      * Consumidor para respuestas de servicios del marketplace
-     * Binding: serviceResponse-in-0 -> service-response-topic
      */
     @Bean
-    public Consumer<Message<ServiceResponseDTO>> serviceResponse() {
+    public Consumer<Message<String>> serviceResponse() {
         return message -> {
             try {
                 log.info("Recibida respuesta de servicio del marketplace");
 
-                ServiceResponseDTO serviceResponse = message.getPayload();
+                String rawMessage = message.getPayload();
+                log.debug("Mensaje crudo recibido: {}", rawMessage);
 
-                // Log de la información recibida
-                log.debug("Información del servicio recibida: {}",
-                        objectMapper.writeValueAsString(serviceResponse));
+                String jsonPayload = decodeMessage(rawMessage);
+                log.debug("JSON decodificado: {}", jsonPayload);
 
-                // Validar que la respuesta contiene información válida
+                ServiceResponseDTO serviceResponse = objectMapper.readValue(jsonPayload, ServiceResponseDTO.class);
+
+                log.info("Servicio deserializado exitosamente: ID={}, Name={}",
+                        serviceResponse.getServiceId(), serviceResponse.getName());
+
                 if (serviceResponse == null || serviceResponse.getServiceId() == null) {
                     log.warn("Respuesta de servicio inválida o vacía recibida");
                     return;
                 }
 
-                // Procesar la respuesta del servicio
                 processServiceResponse(serviceResponse);
 
                 if (serviceResponse.getRequestId() != null) {
@@ -66,6 +66,37 @@ public class ServiceKafkaConsumer {
                         e.getMessage(), e);
             }
         };
+    }
+
+    /**
+     * Decodifica el mensaje detectando si es Base64 o necesita otra conversión
+     */
+    private String decodeMessage(String rawMessage) {
+        try {
+            if (rawMessage.trim().startsWith("{")) {
+                log.debug("Mensaje detectado como JSON directo");
+                return rawMessage;
+            }
+
+            log.debug("Intentando decodificar como Base64...");
+            byte[] decoded = Base64.getDecoder().decode(rawMessage);
+            String decodedStr = new String(decoded, StandardCharsets.UTF_8);
+
+            if (decodedStr.trim().startsWith("{")) {
+                log.debug("Base64 decodificado exitosamente a JSON");
+                return decodedStr;
+            } else {
+                log.warn("Base64 decodificado pero no es JSON válido: {}", decodedStr);
+                return rawMessage;
+            }
+
+        } catch (IllegalArgumentException e) {
+            log.debug("No es Base64 válido, usando como String directo");
+            return rawMessage;
+        } catch (Exception e) {
+            log.warn("Error en decodificación, usando mensaje original: {}", e.getMessage());
+            return rawMessage;
+        }
     }
 
     /**
@@ -99,7 +130,6 @@ public class ServiceKafkaConsumer {
 
     /**
      * Maneja errores en el procesamiento de mensajes
-     * Puede ser extendido para implementar lógica de retry o dead letter queue
      */
     public void handleServiceResponseError(Exception error, ServiceResponseDTO serviceResponse) {
         log.error("Error crítico procesando respuesta de servicio: {}", error.getMessage(), error);

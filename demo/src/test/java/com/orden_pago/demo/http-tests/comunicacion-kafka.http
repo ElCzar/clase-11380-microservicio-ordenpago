@@ -1,0 +1,119 @@
+
+### PRUEBAS 
+
+
+### Login with Basic User
+# @name loginUser
+POST http://localhost:8081/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+@baseUrl = http://localhost:8084
+@serviciosUrl = http://localhost:8083
+@authToken = Bearer {{ loginUser.response.body.accessToken }}
+
+### --- PASO 1: VERIFICAR MICROSERVICIOS ACTIVOS ---
+
+### Health Check - Orden Pago (8084)
+GET {{baseUrl}}/api/health
+Content-Type: application/json
+Authorization: {{authToken}}
+
+
+### Health Check Marketplace (8083)
+GET {{serviciosUrl}}/api/health
+Content-Type: application/json
+Authorization: {{authToken}}
+
+
+### --- PASO 2: VERIFICAR ESTADO INICIAL --- 
+
+### Obtener carrito actual 
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+### Listar servicios disponibles en marketplace (opcional)
+GET {{serviciosUrl}}/api/v1/services
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+### Crear servicio 
+# @name createService
+POST {{serviciosUrl}}/api/v1/services
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Consultoría en Tecnología",
+  "description": "Asesoramiento especializado en arquitectura de software y transformación digital",
+  "price": 150.00,
+  "averageRating": 4.9
+}
+
+###
+@serviceId = {{ createService.response.body.id }}
+
+
+### --- PASO 3: COMUNICACIÓN KAFKA ---
+
+### Añadir servicio existente (UUID válido del marketplace)
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "{{serviceId}}",
+  "quantity": 2
+}
+
+### Añadir servicio con UUID diferente
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "987fcdeb-51a2-43d1-9f4e-123456789abc",
+  "quantity": 1
+}
+
+
+### Añadir servicio con cantidad múltiple
+POST {{baseUrl}}/api/cart/items
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "serviceId": "456789ab-cdef-1234-5678-90abcdef1234",
+  "quantity": 3
+}
+
+### --- PASO 4: VERIFICACIÓN POST-KAFKA ---
+
+### Verificar carrito después de comunicación Kafka
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+
+### --- PASO 5: CHECKOUT Y PAGO ---
+
+### Procesar pago
+POST {{baseUrl}}/api/cart/checkout
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "CREDIT_CARD",
+  "cardNumber": "4532123456789012",
+  "cardHolderName": "Kafka Test User",
+  "expiryMonth": "12",
+  "expiryYear": "2028",
+  "cvv": "123"
+}

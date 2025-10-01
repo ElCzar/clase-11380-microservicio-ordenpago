@@ -1,6 +1,5 @@
 package com.orden_pago.demo.service;
 
-import com.orden_pago.demo.dto.CartEventDTO;
 import com.orden_pago.demo.dto.CartHistoryDTO;
 import com.orden_pago.demo.dto.ServiceResponseDTO;
 import com.orden_pago.demo.enums.CartStatus;
@@ -327,8 +326,8 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Item no encontrado: " + itemId));
 
         Cart cart = item.getCart();
-        UUID serviceId = item.getServiceId();
-        String serviceName = item.getServiceName();
+        // UUID serviceId = item.getServiceId();
+        // String serviceName = item.getServiceName();
 
         cartItemRepository.delete(item);
 

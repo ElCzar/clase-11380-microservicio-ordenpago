@@ -1,8 +1,5 @@
 package com.orden_pago.demo.service.kafka;
 
-import com.orden_pago.demo.dto.CartEventDTO;
-import com.orden_pago.demo.dto.PaymentEventDTO;
-import com.orden_pago.demo.dto.ServiceRequestDTO;
 import com.orden_pago.demo.dto.ServiceResponseDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +32,9 @@ public class KafkaMessagingService {
         String requestId = UUID.randomUUID().toString();
         // ServiceRequestDTO request = new ServiceRequestDTO(serviceId, requestId, "carrito-compras-service");
 
-        // Crear el CompletableFuture que se resolverá cuando llegue la respuesta
         CompletableFuture<ServiceResponseDTO> future = new CompletableFuture<>();
         pendingRequests.put(requestId, future);
 
-        // Configurar timeout de 10 segundos
         future.orTimeout(10, TimeUnit.SECONDS)
                 .exceptionally(throwable -> {
                     pendingRequests.remove(requestId);
@@ -50,15 +45,14 @@ public class KafkaMessagingService {
                     return errorResponse;
                 });
 
-        // Enviar el mensaje
-        // boolean sent = streamBridge.send("serviceRequest-out-0", request);
-        boolean sent = false;
-        if (!sent) {
-            pendingRequests.remove(requestId);
-            future.completeExceptionally(new RuntimeException("No se pudo enviar la solicitud de servicio"));
-        } else {
-            log.info("Solicitud enviada para servicio {} con requestId {}", serviceId, requestId);
-        }
+        // // boolean sent = streamBridge.send("serviceRequest-out-0", request);
+        // boolean sent = false;
+        // if (!sent) {
+        //     pendingRequests.remove(requestId);
+        //     future.completeExceptionally(new RuntimeException("No se pudo enviar la solicitud de servicio"));
+        // } else {
+        //     log.info("Solicitud enviada para servicio {} con requestId {}", serviceId, requestId);
+        // }
 
         return future;
     }
@@ -82,29 +76,29 @@ public class KafkaMessagingService {
         }
     }
 
-    /**
-     * Publica evento de carrito
-     */
-    public void publishCartEvent(CartEventDTO event) {
-        // boolean sent = streamBridge.send("cartEvent-out-0", event);
-        boolean sent = false;
-        if (sent) {
-            log.info("Evento de carrito publicado: {} para carrito {}", event.getEventType(), event.getCartId());
-        } else {
-            log.error("Error al publicar evento de carrito: {}", event);
-        }
-    }
+    // /**
+    //  * Publica evento de carrito
+    //  */
+    // public void publishCartEvent(CartEventDTO event) {
+    //     // boolean sent = streamBridge.send("cartEvent-out-0", event);
+    //     boolean sent = false;
+    //     if (sent) {
+    //         log.info("Evento de carrito publicado: {} para carrito {}", event.getEventType(), event.getCartId());
+    //     } else {
+    //         log.error("Error al publicar evento de carrito: {}", event);
+    //     }
+    // }
 
-    /**
-     * Publica evento de pago
-     */
-    public void publishPaymentEvent(PaymentEventDTO event) {
-        // boolean sent = streamBridge.send("paymentEvent-out-0", event);
-        boolean sent = false; // Comentado temporalmente
-        if (sent) {
-            log.info("Evento de pago publicado: {} para pago {}", event.getEventType(), event.getPaymentId());
-        } else {
-            log.error("Error al publicar evento de pago: {}", event);
-        }
-    }
+    // /**
+    //  * Publica evento de pago
+    //  */
+    // public void publishPaymentEvent(PaymentEventDTO event) {
+    //     // boolean sent = streamBridge.send("paymentEvent-out-0", event);
+    //     boolean sent = false; // Comentado temporalmente
+    //     if (sent) {
+    //         log.info("Evento de pago publicado: {} para pago {}", event.getEventType(), event.getPaymentId());
+    //     } else {
+    //         log.error("Error al publicar evento de pago: {}", event);
+    //     }
+    // }
 }

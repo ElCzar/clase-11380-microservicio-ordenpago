@@ -1,6 +1,5 @@
 package com.orden_pago.demo.service;
 
-import com.orden_pago.demo.dto.PaymentEventDTO;
 import com.orden_pago.demo.dto.PaymentHistoryDTO;
 import com.orden_pago.demo.dto.PaymentRequest;
 import com.orden_pago.demo.dto.PaymentResponse;
@@ -10,7 +9,6 @@ import com.orden_pago.demo.model.Cart;
 import com.orden_pago.demo.model.Payment;
 import com.orden_pago.demo.repository.CartRepository;
 import com.orden_pago.demo.repository.PaymentRepository;
-import com.orden_pago.demo.service.kafka.KafkaMessagingService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +32,7 @@ public class PaymentService {
     private final CartRepository cartRepository;
     private final CartService cartService;
     private final PaymentSimulationService paymentSimulationService;
-    private final KafkaMessagingService kafkaMessagingService;
+    // private final KafkaMessagingService kafkaMessagingService;
 
     /**
      * Procesa un pago simulado

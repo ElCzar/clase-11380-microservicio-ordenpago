@@ -26,20 +26,21 @@ spring:
       # General Kafka Configuration
       kafka:
         binder:
-          brokers: localhost:9093
+          brokers: localhost:9092
           auto-create-topics: true
           configuration:
             "[key.serializer]": org.apache.kafka.common.serialization.StringSerializer
             "[value.serializer]": org.springframework.kafka.support.serializer.JsonSerializer
             "[key.deserializer]": org.apache.kafka.common.serialization.StringDeserializer
-            "[value.deserializer]": org.springframework.kafka.support.serializer.JsonDeserializer
+            "[value.deserializer]": org.apache.kafka.common.serialization.StringDeserializer
             "[spring.json.trusted.packages]": "*"
       bindings:
         # Consumer binding for service responses FROM marketplace
         serviceResponse-in-0:
           destination: service-response-topic
-          content-type: application/json
-          #group: orden-pago-microservice-group
+          content-type: text/plain
+          consumer:
+            use-native-decoding: false
         # Producer binding for service requests TO marketplace
         serviceRequest-out-0:
           destination: service-request-topic
