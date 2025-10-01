@@ -78,6 +78,10 @@ public class ServiceKafkaConsumer {
                 return rawMessage;
             }
 
+            // Trim the "" at end and start if present
+            if (rawMessage.startsWith("\"") && rawMessage.endsWith("\"")) {
+                rawMessage = rawMessage.substring(1, rawMessage.length() - 1);
+            }
             log.debug("Intentando decodificar como Base64...");
             byte[] decoded = Base64.getDecoder().decode(rawMessage);
             String decodedStr = new String(decoded, StandardCharsets.UTF_8);
@@ -108,12 +112,6 @@ public class ServiceKafkaConsumer {
         try {
             log.debug("Procesando información del servicio: {} - {}",
                     serviceResponse.getServiceId(), serviceResponse.getName());
-
-            if (!serviceResponse.isAvailable()) {
-                log.warn("Servicio {} no está activo, ignorando respuesta",
-                        serviceResponse.getServiceId());
-                return;
-            }
 
             // Integrar con CartService para actualizar información del item
             cartService.updateServiceInfo(serviceResponse);
