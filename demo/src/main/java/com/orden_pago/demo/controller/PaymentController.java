@@ -1,5 +1,6 @@
 package com.orden_pago.demo.controller;
 
+import com.orden_pago.demo.dto.PaymentHistoryDTO;
 import com.orden_pago.demo.dto.PaymentRequest;
 import com.orden_pago.demo.dto.PaymentResponse;
 import com.orden_pago.demo.model.Payment;
@@ -71,11 +72,11 @@ public class PaymentController {
      * GET /api/payment/history - Historial de pagos
      */
     @GetMapping("/history")
-    public ResponseEntity<List<Payment>> getPaymentHistory(Authentication authentication) {
+    public ResponseEntity<List<PaymentHistoryDTO>> getPaymentHistory(Authentication authentication) {
         try {
             log.info("Obteniendo historial de pagos");
 
-            List<Payment> paymentHistory = paymentService.getPaymentHistory(authentication);
+            List<PaymentHistoryDTO> paymentHistory = paymentService.getPaymentHistory(authentication);
             return ResponseEntity.ok(paymentHistory);
 
         } catch (Exception e) {

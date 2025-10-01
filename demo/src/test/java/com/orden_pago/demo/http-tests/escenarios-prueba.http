@@ -21,6 +21,11 @@ Content-Type: application/json
 # ESCENARIO 1: COMPRA EXITOSA DE MÚLTIPLES SERVICIOS
 #########################################################################
 
+###
+GET {{baseUrl}}/api/cart/items/mock/catalog
+Content-Type: application/json
+Authorization: {{authToken}}
+
 ### Prueba de seguridad
 GET http://localhost:8084/api/user/data
 Content-Type: application/json
@@ -41,19 +46,19 @@ Content-Type: application/json
 
 ###
 
-### Agregar primer servicio al carrito - Diseño Web
+### Agregar primer servicio al carrito
 POST {{ baseUrl }}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "550e8400-e29b-41d4-a716-446655440001",
+  "serviceId": "bd747bbd-289b-4702-8aa1-b739fb0ee736",
   "quantity": 2
 }
 
 ###
 
-### Agregar segundo servicio al carrito - Marketing Digital
+### Agregar segundo servicio al carrito
 POST {{ baseUrl }}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json

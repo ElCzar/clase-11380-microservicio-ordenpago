@@ -1,6 +1,6 @@
 spring:
   application:
-    name: demo
+    name: microservicio-ordenpago
   security:
     oauth2:
       resourceserver:
@@ -97,7 +97,7 @@ server:
 payment:
   simulation:
     enabled: true
-    success-rate: 0.85
-    min-delay: 2000
-    max-delay: 5000
+    success-rate: 0.99
+    min-delay: 1000 
+    max-delay: 2000
 

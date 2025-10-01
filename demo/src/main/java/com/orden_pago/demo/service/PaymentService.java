@@ -1,6 +1,7 @@
 package com.orden_pago.demo.service;
 
 import com.orden_pago.demo.dto.PaymentEventDTO;
+import com.orden_pago.demo.dto.PaymentHistoryDTO;
 import com.orden_pago.demo.dto.PaymentRequest;
 import com.orden_pago.demo.dto.PaymentResponse;
 import com.orden_pago.demo.dto.PaymentResult;
@@ -123,14 +124,18 @@ public class PaymentService {
     }
 
     /**
-     * Obtiene el historial de pagos del usuario
+     * Obtiene el historial de pagos del usuario como DTOs
      */
     @Transactional(readOnly = true)
-    public List<Payment> getPaymentHistory(Authentication authentication) {
+    public List<PaymentHistoryDTO> getPaymentHistory(Authentication authentication) {
         String userId = getUserIdFromAuth(authentication);
         log.info("Obteniendo historial de pagos para usuario: {}", userId);
 
-        return paymentRepository.findByUserIdOrderByProcessedAtDesc(userId);
+        List<Payment> payments = paymentRepository.findByUserIdOrderByProcessedAtDesc(userId);
+
+        return payments.stream()
+                .map(this::convertToPaymentHistoryDTO)
+                .toList();
     }
 
     /**
@@ -191,6 +196,29 @@ public class PaymentService {
             return jwt.getClaimAsString("sub");
         }
         throw new RuntimeException("No se pudo obtener el user ID del token");
+    }
+
+    /**
+     * Convierte una entidad Payment a PaymentHistoryDTO
+     */
+    private PaymentHistoryDTO convertToPaymentHistoryDTO(Payment payment) {
+        Cart cart = payment.getCart();
+
+        return PaymentHistoryDTO.builder()
+                .id(payment.getId())
+                .cartId(cart.getId())
+                .transactionId(payment.getTransactionId())
+                .amount(payment.getAmount())
+                .method(payment.getMethod())
+                .status(payment.getStatus())
+                .cardHolderName(payment.getCardHolderName())
+                .maskedCardNumber(payment.getCardNumber()) // Ya está enmascarado
+                .processedAt(payment.getProcessedAt())
+                .message(
+                        payment.getStatus() == PaymentStatus.COMPLETED ? "Pago procesado exitosamente" : "Pago fallido")
+                .itemCount(cart.getItems() != null ? cart.getItems().size() : 0)
+                .cartCreatedAt(cart.getCreatedAt())
+                .build();
     }
 
 }

@@ -1,0 +1,188 @@
+### Flujo Completo: Carrito → Pago
+### Prueba integral desde agregar items hasta procesar el pago
+### Puerto: 8084
+
+# Variables de entorno
+@baseUrl = http://localhost:8084
+@perfilUrl = http://localhost:8081
+
+#########################################################################
+# SECCIÓN 1: AUTENTICACIÓN
+#########################################################################
+
+### PASO 1: Login para obtener token
+# @name loginUser
+POST {{perfilUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+### Extraer token de la respuesta del login
+@authToken = Bearer {{ loginUser.response.body.accessToken }}
+
+#########################################################################
+# SECCIÓN 2: PREPARAR CARRITO CON SERVICIOS TURÍSTICOS
+#########################################################################
+
+### PASO 2: Verificar carrito inicial
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+Content-Type: application/json
+
+### PASO 3: Agregar Hotel (2 noches)
+POST {{baseUrl}}/api/cart/items/mock?category=ALOJAMIENTO&quantity=2
+Authorization: {{authToken}}
+
+### PASO 4: Agregar Restaurante (1 cena)
+POST {{baseUrl}}/api/cart/items/mock?category=ALIMENTACION&quantity=1
+Authorization: {{authToken}}
+
+### PASO 5: Agregar Transfer Aeropuerto
+POST {{baseUrl}}/api/cart/items/mock?category=TRANSPORTE&quantity=1
+Authorization: {{authToken}}
+
+### PASO 6: Agregar Tour Ecológico (3 personas)
+POST {{baseUrl}}/api/cart/items/mock?category=ECOTOUR&quantity=3
+Authorization: {{authToken}}
+
+### PASO 7: Ver carrito preparado para el pago
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+
+#########################################################################
+# SECCIÓN 3: SIMULACIÓN DE PAGO - TARJETA DE CRÉDITO
+#########################################################################
+
+### PASO 8: Pago exitoso con tarjeta de crédito
+POST {{baseUrl}}/api/cart/checkout
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "CREDIT_CARD",
+  "cardNumber": "4111111111111111",
+  "cardHolderName": "Juan Pérez",
+  "expiryMonth": "12",
+  "expiryYear": "2026",
+  "cvv": "123"
+}
+
+### PASO 9: Ver carrito después del pago exitoso
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+
+### PASO 10: Ver historial de pagos
+GET {{baseUrl}}/api/payment/history
+Authorization: {{authToken}}
+
+#########################################################################
+# SECCIÓN 4: NUEVO CARRITO PARA PROBAR OTROS MÉTODOS DE PAGO
+#########################################################################
+
+### PASO 11: Agregar nuevos servicios para probar PSE
+POST {{baseUrl}}/api/cart/items/mock?category=ALOJAMIENTO&quantity=1
+Authorization: {{authToken}}
+
+###
+POST {{baseUrl}}/api/cart/items/mock?category=ALIMENTACION&quantity=2
+Authorization: {{authToken}}
+
+### PASO 12: Pago con PSE
+POST {{baseUrl}}/api/cart/checkout
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "PSE",
+  "cardNumber": "4111111111111111",
+  "cardHolderName": "Pedro Pascal",
+  "expiryMonth": "12",
+  "expiryYear": "2026",
+  "cvv": "123"
+}
+
+### PASO 15: Intentar pago con carrito vacío
+DELETE {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+
+###
+POST {{baseUrl}}/api/cart/checkout
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "CREDIT_CARD",
+  "cardNumber": "4111111111111111",
+  "cardHolderName": "Carrito Vacío",
+  "expiryMonth": "12",
+  "expiryYear": "2026",
+  "cvv": "123"
+}
+
+#########################################################################
+# SECCIÓN 6: FLUJO COMPLETO DE COMPRA TURÍSTICA
+#########################################################################
+
+### PASO 16: Crear paquete turístico completo
+POST {{baseUrl}}/api/cart/items/mock?category=ALOJAMIENTO&quantity=5
+Authorization: {{authToken}}
+### Hotel por 5 noches
+
+POST {{baseUrl}}/api/cart/items/mock?category=ALIMENTACION&quantity=10
+Authorization: {{authToken}}
+### 10 comidas
+
+POST {{baseUrl}}/api/cart/items/mock?category=TRANSPORTE&quantity=2
+Authorization: {{authToken}}
+### Transfer ida y vuelta
+
+POST {{baseUrl}}/api/cart/items/mock?category=ECOTOUR&quantity=2
+Authorization: {{authToken}}
+### 2 tours ecológicos
+
+### PASO 17: Verificar paquete completo
+GET {{baseUrl}}/api/cart
+Authorization: {{authToken}}
+
+### PASO 18: Procesar pago del paquete completo
+POST {{baseUrl}}/api/cart/checkout
+Authorization: {{authToken}}
+Content-Type: application/json
+
+{
+  "method": "BANK_TRANSFER",
+  "cardNumber": "9876543210123456",
+  "cardHolderName": "Turista Completo"
+}
+
+### PASO 19: Verificar historial final de pagos
+GET {{baseUrl}}/api/payment/history
+Authorization: {{authToken}}
+
+#########################################################################
+# CÁLCULOS ESPERADOS:
+#########################################################################
+
+# PRIMERA COMPRA (Pasos 3-6):
+# - ALOJAMIENTO: $280,000 x 2 = $560,000
+# - ALIMENTACION: $85,000 x 1 = $85,000
+# - TRANSPORTE: $120,000 x 1 = $120,000
+# - ECOTOUR: $195,000 x 3 = $585,000
+# TOTAL PRIMERA COMPRA: $1,350,000
+
+# SEGUNDA COMPRA (Pasos 11-12):
+# - ALOJAMIENTO: $280,000 x 1 = $280,000
+# - ALIMENTACION: $85,000 x 2 = $170,000
+# TOTAL SEGUNDA COMPRA: $450,000
+
+# PAQUETE COMPLETO (Pasos 16-18):
+# - ALOJAMIENTO: $280,000 x 5 = $1,400,000
+# - ALIMENTACION: $85,000 x 10 = $850,000
+# - TRANSPORTE: $120,000 x 2 = $240,000
+# - ECOTOUR: $195,000 x 2 = $390,000
+# TOTAL PAQUETE: $2,880,000
+
+# TOTAL GENERAL ESPERADO: $4,680,000

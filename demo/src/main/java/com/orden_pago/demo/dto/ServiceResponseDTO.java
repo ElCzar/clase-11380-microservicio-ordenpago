@@ -2,6 +2,7 @@ package com.orden_pago.demo.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +17,7 @@ import java.util.UUID;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class ServiceResponseDTO {
 
     // Campos para correlación de mensajes
@@ -86,5 +88,37 @@ public class ServiceResponseDTO {
 
     public String getCountryCode() {
         return countryCode;
+    }
+
+    /**
+     * Valida que todos los campos requeridos para el carrito estén presentes
+     */
+    public boolean isValidForCart() {
+        return id != null &&
+                title != null && !title.trim().isEmpty() &&
+                price != null &&
+                price.compareTo(BigDecimal.ZERO) >= 0 &&
+                categoryName != null && !categoryName.trim().isEmpty();
+    }
+
+    /**
+     * Obtiene una descripción segura (nunca null)
+     */
+    public String getSafeDescription() {
+        return description != null ? description : "Sin descripción disponible";
+    }
+
+    /**
+     * Obtiene un rating seguro (nunca null)
+     */
+    public Double getSafeAverageRating() {
+        return averageRating != null ? averageRating : 0.0;
+    }
+
+    /**
+     * Obtiene una URL de imagen segura (nunca null)
+     */
+    public String getSafePrimaryImageUrl() {
+        return primaryImageUrl != null ? primaryImageUrl : "https://via.placeholder.com/300x200?text=Sin+Imagen";
     }
 }
