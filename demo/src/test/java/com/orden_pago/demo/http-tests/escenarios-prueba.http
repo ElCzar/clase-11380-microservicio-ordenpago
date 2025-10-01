@@ -18,10 +18,20 @@ Content-Type: application/json
 @authToken = Bearer {{loginUser.response.body.accessToken}}
 
 #########################################################################
-# SAMPLE: CREATE CART ITEM WITH SPECIFIC ID
+# Paso 1: CRUD de carro
 #########################################################################
 
-### Create cart item with specific service ID: 26236648-7432-4bf8-bca5-acafaf6edcf5
+### Revisar los servicios disponibles
+GET {{baseUrl}}/api/cart/items/available
+Authorization: {{authToken}}
+Content-Type: application/json
+
+###
+
+# Variable de item
+@itemId = 174306ef-6ebc-47fb-a900-1a4755ddd0d3
+
+### Crear un item en el carro con un servicio específico
 POST {{baseUrl}}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -33,96 +43,38 @@ Content-Type: application/json
 
 ###
 
-### Verify cart after adding the specific item
-GET {{baseUrl}}/api/cart/items/available
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Add same service with different quantity to test behavior
-POST {{baseUrl}}/api/cart/items
+### Cambiar el mismo servicio con diferente cantidad para probar el comportamiento
+PUT {{baseUrl}}/api/cart/items/aa8fad7c-9897-47d9-bcb3-122db2f6be18
 Authorization: {{authToken}}
 Content-Type: application/json
 
 {
-  "serviceId": "7e860ed3-b4c5-4266-8dac-b401396ac2b2",
   "quantity": 2
 }
-
 ###
 
-### Verify cart content again
+### Verificar contenido del carrito nuevamente
 GET {{baseUrl}}/api/cart
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-#########################################################################
-# AVAILABLE SERVICES TESTING - Repository-based services from Kafka
-#########################################################################
-### Test 1: Get available services from repository (services processed from Kafka)
-# @name availableServices
-GET {{baseUrl}}/api/cart/items/available
-Content-Type: application/json
-Authorization: {{authToken}}
-
-###
-
-### Test 2: Verify the structure of available services response
-GET {{baseUrl}}/api/cart/items/available
-Content-Type: application/json
-Authorization: {{authToken}}
-
-###
-
-### Test 3: Get available services without authentication (should fail)
-GET {{baseUrl}}/api/cart/items/available
-Content-Type: application/json
-
-###
-
-### Test 4: Add a service from available services to cart (using fallback ID)
-### Note: Using a known serviceId from mock data, replace with actual ID from response if needed
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "26236648-7432-4bf8-bca5-acafaf6edcf5",
-  "quantity": 1
-}
-
-###
-
-### Test 5: Verify cart after adding available service
-GET {{baseUrl}}/api/cart
+### Eliminar un item del carro
+DELETE {{baseUrl}}/api/cart/items/aa8fad7c-9897-47d9-bcb3-122db2f6be18
 Authorization: {{authToken}}
 Content-Type: application/json
 
 ###
 
-### Test 6: Check if services show up in available list after adding to cart (should still be available)
-GET {{baseUrl}}/api/cart/items/available
-Content-Type: application/json
-Authorization: {{authToken}}
-
-###
-
-### Test 7: Test adding multiple quantities of the same available service
-POST {{baseUrl}}/api/cart/items
+### Historial de carritos
+GET {{baseUrl}}/api/cart/history
 Authorization: {{authToken}}
 Content-Type: application/json
 
-{
-  "serviceId": "26236648-7432-4bf8-bca5-acafaf6edcf5",
-  "quantity": 3
-}
-
 ###
 
-### Test 8: Test adding a non-existent service (should fail)
+### Añadir otro servicio que no existe (debería fallar)
 POST {{baseUrl}}/api/cart/items
 Authorization: {{authToken}}
 Content-Type: application/json
@@ -134,302 +86,8 @@ Content-Type: application/json
 
 ###
 
-### Test 9: Final verification - check both cart and available services
+### 
 GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-GET {{baseUrl}}/api/cart/items/available
-Content-Type: application/json
-Authorization: {{authToken}}
-
-###
-
-#########################################################################
-# ESCENARIO 1: COMPRA EXITOSA DE MÚLTIPLES SERVICIOS
-######################################################################### Prueba de seguridad
-GET http://localhost:8084/api/user/data
-Content-Type: application/json
-Authorization: {{authToken}}
-
-###
-
-### Verificar la salud del servicio
-GET {{ baseUrl }}/actuator/health
-Content-Type: application/json
-
-###
-
-### Verificar carrito inicial
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Agregar primer servicio al carrito
-POST {{ baseUrl }}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "bd747bbd-289b-4702-8aa1-b739fb0ee736",
-  "quantity": 2
-}
-
-###
-
-### Agregar segundo servicio al carrito
-POST {{ baseUrl }}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440002",
-  "quantity": 1
-}
-
-###
-
-### Verificar contenido del carrito
-# @name cartForPayment1
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Procesar pago del carrito
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "{{cartForPayment1.response.body.id}}",
-  "method": "CREDIT_CARD",
-  "cardNumber": "4532123456789012",
-  "cardHolderName": "Test User",
-  "expiryMonth": "12",
-  "expiryYear": "2025",
-  "cvv": "123"
-}
-
-###
-
-### Verificar historial de pagos
-GET {{baseUrl}}/api/payment/history
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-#########################################################################
-# ESCENARIO 2: MODIFICAR CARRITO SIN PAGO Y DESPUÉS ELIMINARLO
-#########################################################################
-
-### Crear nuevo carrito con items
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440003",
-  "quantity": 1
-}
-
-###
-
-### Agregar más items
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440004",
-  "quantity": 2
-}
-
-###
-
-### Verificar carrito actual
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Remover un item específico (NOTA: Reemplazar {itemId} con ID real)
-DELETE {{baseUrl}}/api/cart/items/{itemId}
-Authorization: {{authToken}}
-
-###
-
-### Verificar carrito después de remover item
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Abandonar carrito (vaciarlo completamente)
-DELETE {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-
-###
-
-### Verificar carrito vacío
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-#########################################################################
-# ESCENARIO 3: MÚLTIPLES INTENTOS DE PAGO
-#########################################################################
-
-### Crear carrito para pago
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440005",
-  "quantity": 1
-}
-
-###
-
-### Verificar carrito antes del pago
-# @name cartForPayment3
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Primer intento de pago - Tarjeta de Crédito
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "{{cartForPayment3.response.body.id}}",
-  "method": "CREDIT_CARD",
-  "cardNumber": "4532123456789012",
-  "cardHolderName": "Test User",
-  "expiryMonth": "12",
-  "expiryYear": "2025",
-  "cvv": "123"
-}
-
-###
-
-### Segundo intento de pago con PayPal (si el primero falló)
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "{{cartForPayment3.response.body.id}}",
-  "method": "PAYPAL",
-  "cardNumber": "4532123456789012",
-  "cardHolderName": "Test User",
-  "expiryMonth": "12",
-  "expiryYear": "2025",
-  "cvv": "123"
-}
-
-###
-
-### Tercer intento con transferencia bancaria
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "{{cartForPayment3.response.body.id}}",
-  "method": "BANK_TRANSFER",
-  "cardNumber": "1234567890123456",
-  "cardHolderName": "Test User",
-  "expiryMonth": "12",
-  "expiryYear": "2025",
-  "cvv": "123"
-}
-
-###
-
-### Verificar historial completo de pagos
-GET {{baseUrl}}/api/payment/history
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-#########################################################################
-# ESCENARIO 4: PRUEBAS DE CONCURRENCIA (MÚLTIPLES CARRITOS)
-#########################################################################
-
-### Crear primer carrito
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440006",
-  "quantity": 1
-}
-
-###
-
-### Verificar primer carrito
-# @name firstConcurrentCart
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Completar primer carrito con pago
-POST {{baseUrl}}/api/payment/simulate
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "cartId": "{{firstConcurrentCart.response.body.id}}",
-  "method": "CREDIT_CARD",
-  "cardNumber": "4532123456789012",
-  "cardHolderName": "Usuario Multitarea",
-  "expiryMonth": "12",
-  "expiryYear": "2025",
-  "cvv": "123"
-}
-
-###
-
-### Crear segundo carrito inmediatamente
-POST {{baseUrl}}/api/cart/items
-Authorization: {{authToken}}
-Content-Type: application/json
-
-{
-  "serviceId": "550e8400-e29b-41d4-a716-446655440007",
-  "quantity": 2
-}
-
-###
-
-### Verificar que se creó un nuevo carrito activo
-GET {{baseUrl}}/api/cart
-Authorization: {{authToken}}
-Content-Type: application/json
-
-###
-
-### Verificar historial de carritos
-GET {{baseUrl}}/api/cart/history
 Authorization: {{authToken}}
 Content-Type: application/json
 
