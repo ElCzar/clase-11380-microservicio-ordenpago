@@ -70,30 +70,20 @@ public class CartService {
         Cart cart = getCurrentCart(authentication);
 
         // Solicitar información del servicio a través de Kafka
-        // return kafkaMessagingService.requestServiceInfo(serviceId)
-        // .thenCompose(serviceResponse -> {
-        // if (serviceResponse.getErrorMessage() != null) {
-        // throw new RuntimeException(
-        // "Error al obtener información del servicio: " +
-        // serviceResponse.getErrorMessage());
-        // }
+        return kafkaMessagingService.requestServiceInfo(serviceId)
+            .thenCompose(serviceResponse -> {
+                
+            if (serviceResponse.getErrorMessage() != null) {
+                throw new RuntimeException("Error al obtener información del servicio: " + serviceResponse.getErrorMessage());
+            }
 
-        // if (!serviceResponse.getAvailable()) {
-        // throw new RuntimeException("Servicio no disponible: " + serviceId);
-        // }
+            if (!serviceResponse.getAvailable()) {
+                throw new RuntimeException("Servicio no disponible: " + serviceId);
+            }
 
-        // return addItemToCartInternal(cart, serviceResponse, quantity, userId);
-        // });
+            return addItemToCartInternal(cart, serviceResponse, quantity, userId);
+        });
 
-        // Simulación temporal sin Kafka - crear respuesta mock
-        ServiceResponseDTO mockResponse = new ServiceResponseDTO();
-        mockResponse.setId(serviceId);
-        mockResponse.setTitle("Servicio Mock");
-        mockResponse.setDescription("Servicio temporal para pruebas sin Kafka");
-        mockResponse.setPrice(java.math.BigDecimal.valueOf(100.0));
-        mockResponse.setIsActive(true);
-
-        return addItemToCartInternal(cart, mockResponse, quantity, userId);
     }
 
     /**
@@ -109,7 +99,7 @@ public class CartService {
     }
 
     /**
-     * Método interno para agregar item después de validar el servicio
+     * Agrega item después de validar el servicio
      */
     private CompletableFuture<CartItem> addItemToCartInternal(Cart cart, ServiceResponseDTO serviceResponse,
             Integer quantity, String userId) {
