@@ -58,6 +58,17 @@ services:
       - kafka-network
     restart: unless-stopped
 
+  orden-pago:
+    image: # Agregar imagen de MS orden-pago
+    container_name: orden-pago
+    ports:
+      - "8084:8084"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/microservices-ecosystem
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/microservices-ecosystem/protocol/openid-connect/certs
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+
 networks:
   kafka-network:
     driver: bridge
