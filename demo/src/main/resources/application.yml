@@ -5,9 +5,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Remove issuer-uri to skip issuer validation and allow tokens from any microservice
-          # issuer-uri: http://localhost:8180/realms/microservices-ecosystem
-          jwk-set-uri: http://localhost:8180/realms/microservices-ecosystem/protocol/openid-connect/certs
+          jwk-set-uri: http://10.43.103.30:8180/realms/microservices-ecosystem/protocol/openid-connect/certs
   datasource:
     url: jdbc:h2:mem:payment
     driver-class-name: org.h2.Driver
@@ -26,7 +24,7 @@ spring:
       # General Kafka Configuration
       kafka:
         binder:
-          brokers: localhost:9092
+          brokers: 10.43.103.40:9092
           auto-create-topics: true
           configuration:
             "[key.serializer]": org.apache.kafka.common.serialization.StringSerializer
@@ -49,7 +47,7 @@ spring:
 # Keycloak Configuration
 keycloak:
   realm: microservices-ecosystem
-  auth-server-url: http://localhost:8180
+  auth-server-url: http://10.43.103.30:8180
   ssl-required: none
   resource: ordenpago-service
   credentials:
@@ -68,10 +66,14 @@ kafka:
 eureka:
     client:
         service-url:
-            defaultZone: http://localhost:8761/eureka/
+            defaultZone: http://10.43.103.229:8761/eureka/
         register-with-eureka: true
     instance:
         prefer-ip-address: true
+        ip-address: 10.43.103.40
+        non-secure-port: 8084
+        instance-id: 10.43.103.40:8084
+        hostname: 10.43.103.40
 
 
 management:

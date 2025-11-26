@@ -1,11 +1,12 @@
 # Multi-stage build for optimized image
 # Stage 1: Build the application
-FROM eclipse-temurin:21-jdk-alpine AS builder
-
+FROM eclipse-temurin:21 AS builder
 WORKDIR /app
 
 # Install Maven
-RUN apk add --no-cache maven
+RUN apt-get update && \
+    apt-get install -y maven && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy Maven configuration files first (for better caching)
 COPY pom.xml ./
@@ -21,19 +22,20 @@ RUN mvn clean package -DskipTests && \
     mv target/*.jar app.jar
 
 # Stage 2: Runtime image
-FROM eclipse-temurin:21-jre-alpine
-
+FROM eclipse-temurin:21
 WORKDIR /app
 
 # Install curl for health checks
-RUN apk add --no-cache curl
+RUN apt-get update && \
+    apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the built JAR from builder stage
 COPY --from=builder /app/app.jar ./app.jar
 
 # Create a non-root user and set ownership
-RUN addgroup -S spring && \
-    adduser -S spring -G spring && \
+RUN groupadd -r spring && \
+    useradd -r -g spring spring && \
     chown -R spring:spring /app
 
 # Switch to non-root user
